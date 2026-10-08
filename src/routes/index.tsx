@@ -53,7 +53,7 @@ function AdSlot() {
 function InPagePushSlot() {
  const banners = [
   {name:"Kiehl's",label:'BEAUTY',href:'https://invl.us/clo2wsx',logo:'https://img.involve.asia/rpss/campaigns_banners/1786592557-eYGnGzDK3lJVZqI2TmDIkzTActjr8HHw.jpg'},
-  {name:'TikTok',label:'DISCOVER',href:'https://invl.app/clo2wlh',logo:'https://www.citypng.com/public/uploads/preview/tik-tok-logo-icon-701751694793267gxetcvvp3v.png?v=2026040220'},
+  {name:"Kiehl's",label:'BEAUTY',href:'https://invl.us/clo2wsx',logo:'https://img.involve.asia/rpss/campaigns_banners/1786592557-eYGnGzDK3lJVZqI2TmDIkzTActjr8HHw.jpg'},
   {name:"Domino's Pizza",label:'FOOD & DELIVERY',href:'https://invl.me/clo2wtn',logo:'https://img.involve.asia/rpss/campaigns_banners/1751339076-WkpULRGhkxItbQ8QN8oqcEYgXUXbk6oX.png'},
   {name:'JD Sports',label:'SPORT & STYLE',href:'https://invl.me/clo2wms',logo:'https://img.involve.asia/rpss/campaigns_banners/38283-F6wDTqEGPyg3fu4ajrl3FTsB9UY8nAk9.jpeg'},
  ];
