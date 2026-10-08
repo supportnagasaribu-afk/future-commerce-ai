@@ -5,7 +5,9 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import logo from '@/assets/barangviral-logo.png.asset.json';
 import heroImage from '@/assets/commerce-hero.jpg';
-import productImage from '@/assets/product-collection.jpg';
+import lampImage from '@/assets/product-0.jpg';
+import fanImage from '@/assets/product-1.jpg';
+import organizerImage from '@/assets/product-2.jpg';
 
 export const Route = createFileRoute('/')({
  head: () => ({ meta: [
@@ -36,7 +38,8 @@ const audiences = [
 ];
 const wheel = [{name:'PRODUCT',icon:Box},{name:'DATA',icon:Database},{name:'AI INTELLIGENCE',icon:BrainCircuit},{name:'DISCOVERY',icon:ScanSearch},{name:'MATCHING',icon:Network},{name:'TRANSACTION',icon:ShoppingBag},{name:'MORE DATA',icon:Layers},{name:'SMARTER AI',icon:RefreshCw}];
 const nav = [{label:'Home',href:'#home'},{label:'Discover',href:'#discover'},{label:'AI Shopping',href:'#ai-shopping'},{label:'Viral Radar',href:'#viral-radar'},{label:'For Sellers',href:'#sellers'},{label:'For Partners',href:'#partners'}];
-function ProductVisual({index}:{index:number}) {return <div className={`product-visual product-${index}`}><img src={productImage} alt={products[index]?.name ?? 'Demo product'} width={1536} height={1024} loading="lazy"/></div>}
+const productImages = [lampImage, fanImage, organizerImage];
+function ProductVisual({index}:{index:number}) {return <div className="product-visual"><img src={productImages[index]} alt={products[index]?.name ?? 'Demo product'} width={512} height={1024} loading="lazy"/></div>}
 function Eyebrow({children}:{children:React.ReactNode}) {return <div className="eyebrow"><span className="eyebrow-dot"/>{children}</div>}
 function Index() {
  const [mobileOpen,setMobileOpen] = useState(false);
