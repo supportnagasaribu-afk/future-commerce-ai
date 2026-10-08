@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { useEffect, useState, type FormEvent } from 'react';
+import { useEffect, useState, useMemo, type FormEvent } from 'react';
 import { ArrowRight, ArrowUpRight, ArrowUp, Sparkles, BrainCircuit, ScanSearch, Network, ShoppingBag, Music2, Smartphone, Footprints, TrendingUp, Radar, Check, SlidersHorizontal, Menu, X, Play, Store, Package, Megaphone, ShieldCheck, Fingerprint, Layers, Database, RefreshCw, Box, ChartNoAxesCombined, GitCompareArrows, ChevronRight, CircleDot } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
@@ -26,11 +26,18 @@ const steps = [
  {name:'MATCHING',title:'Connect the Right People',description:'Match buyers, sellers, suppliers and partners intelligently.',icon:Network},
  {name:'COMMERCE',title:'Turn Opportunities Into Sales',description:'Convert better recommendations and connections into real commerce.',icon:ShoppingBag},
 ];
-const products = [
- {name:'Ambient LED Table Lamp',category:'Home & living',price:79,reason:'Warm lighting, small footprint',viral:92,growth:87,competition:'Medium',opportunity:91,demand:'Rising',recommendation:'A strong discovery opportunity for small-space living.',tag:'High opportunity'},
- {name:'Portable Rechargeable Fan',category:'Lifestyle & essentials',price:39,reason:'Portable, rechargeable comfort',viral:88,growth:94,competition:'High',opportunity:84,demand:'High',recommendation:'Differentiate with portability and everyday convenience.',tag:'Trending signal'},
- {name:'Modular Desk Organizer',category:'Home & workspace',price:59,reason:'Flexible storage for compact spaces',viral:85,growth:81,competition:'Low',opportunity:93,demand:'Growing',recommendation:'Explore the compact workspace niche with useful content.',tag:'Emerging opportunity'},
+type ShoppingProduct = {
+ id:string; name:string; brand:string|null; image_url:string|null; current_price:number|null;
+ original_price:number|null; discount_percent:number|null; rating:number|null; review_count:number;
+ sold_count:number; description:string|null; category_name:string|null; source:string|null;
+ product_url:string|null; viral_score:number;
+};
+const demoProducts = [
+ {name:'Xiaomi Bluetooth Speaker Essential',category:'Audio & Lifestyle',price:69,reason:'Compact everyday entertainment for a small space',viral:0},
+ {name:'Xiaomi Tag',category:'Accessories',price:59,reason:'Small and useful for keeping track of everyday items',viral:0},
+ {name:'Xiaomi Smart Band 11 Active',category:'Wearables',price:119,reason:'Compact everyday fitness and activity tracking',viral:0},
 ];
+
 const audiences = [
  {id:'buyers',label:'FOR BUYERS',title:'Shop Smarter With AI',icon:ShoppingBag,features:['AI product recommendations','Product comparison','Personalized discovery','Smart search','AI shopping assistant'],cta:'Find your next discovery'},
  {id:'sellers',label:'FOR SELLERS',title:'Sell Smarter With AI',icon:Store,features:['AI product optimization','Pricing intelligence','Product analysis','Marketing ideas','Campaign assistance','AI sales insights'],cta:'Explore seller intelligence'},
@@ -73,7 +80,8 @@ function InPagePushSlot() {
   </div>
  </section>;
 }
-function ProductVisual({index}:{index:number}) {return <div className="product-visual"><img src={productImages[index]} alt={products[index]?.name ?? 'Demo product'} width={512} height={1024} loading="lazy"/></div>}
+function ProductVisual({product}:{product:ShoppingProduct}) {return <div className="product-visual">{product.image_url ? <img src={product.image_url} alt={product.name} width={512} height={512} loading="lazy"/> : <div className="radar-image-placeholder"><Package size={22}/><span>Product image unavailable</span></div>}</div>}
+
 function Eyebrow({children}:{children:React.ReactNode}) {return <div className="eyebrow"><span className="eyebrow-dot"/>{children}</div>}
 function Index() {
  useEffect(() => {
@@ -88,6 +96,22 @@ function Index() {
   const container = document.getElementById(containerId);
   if (container) container.appendChild(script);
   return () => script.remove();
+ }, []);
+
+ useEffect(() => {
+  let cancelled=false;
+  async function loadShoppingProducts() {
+   try {
+    const res=await fetch(SUPABASE_URL+'/rest/v1/products?select=id,name,brand,image_url,current_price,original_price,discount_percent,rating,review_count,sold_count,description,viral_score,source,product_url,category:categories(name)&order=viral_score.desc,created_at.desc&limit=50',{headers:{apikey:SUPABASE_KEY,Authorization:'Bearer '+SUPABASE_KEY}});
+    if(!res.ok) throw new Error('Shopping product request failed');
+    const data=await res.json();
+    const mapped=Array.isArray(data)?data.map((p:any)=>({...p,category_name:p.category?.name ?? null})):[]; 
+    if(!cancelled) setShoppingProducts(mapped);
+   } catch { if(!cancelled) setShoppingProducts([]); }
+   finally { if(!cancelled) setShoppingLoading(false); }
+  }
+  loadShoppingProducts();
+  return ()=>{cancelled=true};
  }, []);
 
  useEffect(() => {
@@ -110,12 +134,46 @@ function Index() {
  const [input,setInput] = useState('');
  const [request,setRequest] = useState('Find me the best products under RM100 for a small home.');
  const [submitted,setSubmitted] = useState(false);
+ const [shoppingProducts,setShoppingProducts] = useState<ShoppingProduct[]>([]);
+ const [shoppingLoading,setShoppingLoading] = useState(true);
  const [modal,setModal] = useState<{type:string;index?:number;title?:string}|null>(null);
  const [radarProducts,setRadarProducts] = useState<RadarProduct[]>([]);
  const [radarLoading,setRadarLoading] = useState(true);
+
+ function parseBudget(text:string) {
+  const m=text.match(/(?:under|below|less than|max(?:imum)?|budget(?: of)?)\s*RM?\s*(\d+(?:\.\d+)?)/i) || text.match(/RM\s*(\d+(?:\.\d+)?)/i);
+  return m ? Number(m[1]) : null;
+ }
+ function scoreShoppingProduct(p:ShoppingProduct,text:string) {
+  const q=text.toLowerCase(), words=q.split(/[^a-z0-9]+/).filter(w=>w.length>2);
+  const hay=[p.name,p.brand,p.description,p.category_name].filter(Boolean).join(' ').toLowerCase();
+  let score=0;
+  for(const w of words) if(hay.includes(w)) score+=18;
+  const budget=parseBudget(text);
+  if(budget!==null && p.current_price!==null) score += p.current_price<=budget ? 35 : -45;
+  if(/small|compact|space|room|home|house|desk/i.test(q) && /tag|speaker|band|watch|bud|headphone|essential/i.test(hay)) score+=12;
+  if(/audio|music|speaker|sound/i.test(q) && /speaker|buds|headphone/i.test(hay)) score+=30;
+  if(/fitness|health|watch|band/i.test(q) && /band|watch/i.test(hay)) score+=30;
+  if(/tablet|ipad|screen|study/i.test(q) && /pad|tablet/i.test(hay)) score+=30;
+  if(/tv|television/i.test(q) && /tv|television/i.test(hay)) score+=30;
+  if(p.rating) score+=Math.min(10,p.rating*2);
+  score+=Math.min(10,p.viral_score/10);
+  return score;
+ }
+ function recommendationReason(p:ShoppingProduct,text:string,budget:number|null) {
+  const r:string[]=[];
+  if(budget!==null && p.current_price!==null && p.current_price<=budget) r.push('within RM'+budget+' budget');
+  if(/small|compact|space|room|home/i.test(text) && /tag|speaker|band|watch|bud|headphone/i.test(p.name.toLowerCase())) r.push('compact everyday use');
+  if(/audio|music|sound/i.test(text) && /speaker|buds|headphone/i.test(p.name.toLowerCase())) r.push('matches your audio need');
+  if(/fitness|health|watch|band/i.test(text) && /band|watch/i.test(p.name.toLowerCase())) r.push('matches your fitness need');
+  if(!r.length) r.push(p.category_name ? 'matches '+p.category_name.toLowerCase() : 'matches your request');
+  return r.slice(0,2).join(' · ');
+ }
  function submit(e:FormEvent) {e.preventDefault();if(!input.trim())return;setRequest(input.trim());setInput('');setSubmitted(true)}
  function scrollTo(id:string) {document.getElementById(id)?.scrollIntoView({behavior:'smooth'});setMobileOpen(false)}
- const selected = modal?.index !== undefined ? products[modal.index] : undefined;
+ const budget=parseBudget(request);
+ const recommendedProducts=useMemo(()=>[...shoppingProducts].sort((a,b)=>scoreShoppingProduct(b,request)-scoreShoppingProduct(a,request)).slice(0,3),[shoppingProducts,request]);
+ const selected=modal?.index!==undefined ? recommendedProducts[modal.index] : undefined;
  return <>
  <header className="site-header" id="home"><div className="container-wide header-inner">
  <a href="#home" aria-label="BarangViral.Store home"><img className="brand-image" src={logoUrl} alt="BarangViral.Store" width={1920} height={640}/></a>
@@ -133,11 +191,11 @@ function Index() {
  </div><div className="hero-footnote">INTELLIGENCE AT THE CORE. COMMERCE AT THE EDGE.</div></section>
  <AdSlot />
  <section className="journey" id="discover"><div className="container-wide"><div className="section-heading centered"><Eyebrow>ONE CONNECTED JOURNEY</Eyebrow><h2>From intent to opportunity. From opportunity to commerce.</h2><p>Five intelligent stages. One seamlessly connected ecosystem.</p></div><div className="journey-grid">{steps.map((s,i)=><article className="journey-stage" key={s.name}><div className="stage-icon"><s.icon size={20} strokeWidth={1.5}/></div>{i<4&&<div className="stage-line"><ChevronRight/></div>}<div className="stage-number">STEP 0{i+1}</div><h3>{s.name}</h3><h4>{s.title}</h4><p>{s.description}</p></article>)}</div></div></section>
- <section className="section assistant-section" id="ai-shopping"><div className="container-wide"><div className="section-topline"><div className="section-heading"><Eyebrow>YOUR INTELLIGENT SHOPPING COMPANION</Eyebrow><h2>Not just search. Understanding.</h2><p>A shopping experience that starts with what you need — not what you type.</p></div><span className="demo-tag"><CircleDot size={11}/>INTERACTIVE CONCEPT · DEMO DATA</span></div>
- <div className="assistant-window"><div className="assistant-titlebar"><div className="assistant-name"><span className="ai-mark"><Sparkles size={16}/></span>BarangViral AI<span className="text-muted-foreground font-normal hidden sm:inline">/ Shopping assistant</span></div><span className="assistant-status"><span className="eyebrow-dot"/>CONCEPT PREVIEW</span></div>
- <div className="assistant-body"><div className="chat-side"><div className="user-message">{request}</div><div className="ai-message"><span className="ai-mark shrink-0"><Sparkles size={15}/></span><div><strong>{submitted?'Let’s explore your idea.':'Small space. Smart finds.'}</strong><p>{submitted?'This concept uses a curated sample collection, not a live AI response. Here are three example recommendations to explore and compare.':'I’ve picked three useful finds that fit your space and your budget. Here’s why they could be a great match.'}</p><div className="intent-chips"><span><Check size={9} className="inline mr-1"/>Under RM100</span><span>Small-space friendly</span><span>Everyday value</span></div></div></div><div className="assistant-tip"><BrainCircuit size={14} className="inline mr-2 text-primary"/>Beyond the product: understand the fit, compare the options, and decide with confidence.</div>
- <form className="chat-input" onSubmit={submit}><input aria-label="Ask the AI shopping assistant" value={input} onChange={e=>setInput(e.target.value)} placeholder="Tell me what you’re looking for…"/><Button variant="commerce" size="icon" aria-label="Send request" type="submit" disabled={!input.trim()}><ArrowUp/></Button></form></div>
- <div className="suggestions"><div className="suggestions-heading">CURATED FOR YOUR SPACE <span>3 demo recommendations</span></div>{products.map((p,i)=><div className="product-row" key={p.name}><ProductVisual index={i}/><div className="min-w-0"><h4>{p.name}</h4><p>{p.reason}</p><small><Check size={10}/>Why it fits your needs</small></div><span className="product-price">RM{p.price}</span></div>)}<div className="compare-action"><span>Illustrative products & prices</span><Button variant="outline" size="sm" onClick={()=>setModal({type:'compare'})}><GitCompareArrows/>Compare options</Button></div></div></div></div>
+ <section className="section assistant-section" id="ai-shopping"><div className="container-wide"><div className="section-topline"><div className="section-heading"><Eyebrow>YOUR INTELLIGENT SHOPPING COMPANION</Eyebrow><h2>Not just search. Understanding.</h2><p>A shopping experience that starts with what you need — not what you type.</p></div><span className="demo-tag"><CircleDot size={11}/>{shoppingLoading?'CONNECTING TO PRODUCT DATA':'LIVE PRODUCT DATA · V1'}</span></div>
+ <div className="assistant-window"><div className="assistant-titlebar"><div className="assistant-name"><span className="ai-mark"><Sparkles size={16}/></span>BarangViral AI<span className="text-muted-foreground font-normal hidden sm:inline">/ Shopping assistant</span></div><span className="assistant-status"><span className="eyebrow-dot"/>{shoppingLoading?'CONNECTING':'LIVE MATCHING'}</span></div>
+ <div className="assistant-body"><div className="chat-side"><div className="user-message">{request}</div><div className="ai-message"><span className="ai-mark shrink-0"><Sparkles size={15}/></span><div><strong>{submitted?'Here’s what matches your request.':'Try describing what you need.'}</strong><p>{shoppingLoading?'Loading the current BarangViral product catalogue…':shoppingProducts.length?'I matched your request against '+shoppingProducts.length+' products in our live catalogue. The ranking uses your wording, budget and product attributes — no paid AI API is required.':'Product data is temporarily unavailable. Please try again shortly.'}</p>{!shoppingLoading&&shoppingProducts.length>0&&<div className="intent-chips"><span><Check size={9} className="inline mr-1"/>{budget!==null?'Under RM'+budget:'Budget understood'}</span><span>Product matching</span><span>BarangViral catalogue</span></div>}</div></div><div className="assistant-tip"><BrainCircuit size={14} className="inline mr-2 text-primary"/>Rule-based intelligence first: understand intent, match products, rank options.</div>
+ <form className="chat-input" onSubmit={submit}><input aria-label="Ask the AI shopping assistant" value={input} onChange={e=>setInput(e.target.value)} placeholder="Tell me what you’re looking for…"/><Button variant="commerce" size="icon" aria-label="Send request" type="submit" disabled={!input.trim()||shoppingLoading}><ArrowUp/></Button></form></div>
+ <div className="suggestions"><div className="suggestions-heading">MATCHED FOR YOU <span>{shoppingLoading?'Loading…':recommendedProducts.length+' recommendations'}</span></div>{shoppingLoading?[0,1,2].map(i=><div className="product-row" key={i}><div className="product-visual"/><div className="min-w-0"><h4>Finding products…</h4><p>Reading live catalogue data</p></div><span className="product-price">—</span></div>):recommendedProducts.map((p)=><div className="product-row" key={p.id}><ProductVisual product={p}/><div className="min-w-0"><h4>{p.name}</h4><p>{recommendationReason(p,request,budget)}</p><small><Check size={10}/>Matched from live catalogue</small></div><span className="product-price">{p.current_price!==null?'RM'+Number(p.current_price).toFixed(0):'—'}</span></div>)}{!shoppingLoading&&!recommendedProducts.length&&<div className="dialog-note">No matching products found yet. Try a broader request such as “products under RM100” or “something for fitness”.</div>}<div className="compare-action"><span>Powered by Supabase product data · No paid AI API</span>{recommendedProducts.length>1&&<Button variant="outline" size="sm" onClick={()=>setModal({type:'compare'})}><GitCompareArrows/>Compare options</Button>}</div></div></div></div>
  </div></section>
  <InPagePushSlot />
  <section className="sponsored-offers" aria-label="Sponsored offers">
@@ -157,9 +215,10 @@ function Index() {
  <section className="final-cta"><Eyebrow>INTELLIGENCE MEETS OPPORTUNITY</Eyebrow><h2>Welcome to the Next<br/>Generation of Commerce.</h2><p>A smarter way to discover. A better way to connect. A new way to grow.</p><div className="hero-actions"><Button variant="secondary" className="primary-final" onClick={()=>scrollTo('ai-shopping')}>Explore BarangViral<ArrowUpRight/></Button><Button variant="outline" className="secondary-final" onClick={()=>setModal({type:'coming'})}>Join the Coming Marketplace<ArrowRight/></Button></div></section>
  </main>
  <footer className="footer"><div className="container-wide"><div className="footer-top"><div><a href="#home" aria-label="BarangViral.Store home"><img src={footerLogoUrl} className="brand-image footer-brand-image" alt="BarangViral.Store" width={1920} height={640} loading="lazy"/></a><p>AI E-Commerce Marketplace</p></div><nav className="footer-links" aria-label="Footer navigation"><a href="#about">About</a><a href="#ai-commerce">AI Commerce</a><a href="#buyers">For Buyers</a><a href="#sellers">For Sellers</a><a href="#suppliers">For Suppliers</a><a href="#partners">For Partners</a>{['Contact','Privacy','Terms'].map(t=><Button variant="link" key={t} onClick={()=>setModal({type:'info',title:t})}>{t}</Button>)}</nav></div><div className="footer-bottom"><span>© 2026 BarangViral.Store. All rights reserved.</span><span>UI/UX concept · Not a live marketplace</span><span>AI → Intelligence → Discovery → Matching → Commerce</span></div></div></footer>
- <Dialog open={modal!==null} onOpenChange={open=>{if(!open)setModal(null)}}><DialogContent className="max-w-xl w-[calc(100%-32px)] rounded-lg"><DialogTitle>{modal?.type==='compare'?'Compare your smart finds':modal?.type==='insight'?selected?.name:modal?.type==='coming'?'The next generation is taking shape.':modal?.type==='audience'?`${modal.title?.replace('FOR ','')} · Coming marketplace`:modal?.title}</DialogTitle><DialogDescription>{modal?.type==='compare'?'Illustrative product comparison · Concept/demo data':modal?.type==='insight'?'Viral Radar AI · Illustrative intelligence, not live market analysis':modal?.type==='coming'?'BarangViral.Store is a UI/UX concept. Marketplace registration is not open yet.':modal?.type==='audience'?'A preview of the intelligence tools planned for the future marketplace.':'BarangViral.Store · Marketplace concept'}</DialogDescription>
- {modal?.type==='compare'&&<><div className="overflow-x-auto"><table className="comparison-table"><thead><tr><th>Product</th><th>Demo price</th><th>Best for</th></tr></thead><tbody>{products.map(p=><tr key={p.name}><td>{p.name}</td><td>RM{p.price}</td><td>{p.reason}</td></tr>)}</tbody></table></div><p className="dialog-note">Choose the lamp for atmosphere, the fan for portability, or the organizer for storage. All three sample options are individually under RM100. No purchases are available in this concept.</p></>}
- {modal?.type==='insight'&&selected&&<><div className="metrics py-4"><div className="metric"><span>Opportunity Score</span><strong>{selected.opportunity}/100</strong></div><div className="metric"><span>Competition</span><strong>{selected.competition}</strong></div><div className="metric"><span>Demand</span><strong>{selected.demand}</strong></div><div className="metric"><span>Viral Score</span><strong>{selected.viral}/100</strong></div></div><div className="recommendation"><strong><Sparkles size={12}/>AI RECOMMENDATION</strong>{selected.recommendation}</div><p className="dialog-note">These scores demonstrate how future product intelligence could appear. They are not sourced from real demand, sales, or market activity.</p><Button variant="commerce" onClick={()=>{setModal(null);scrollTo('ai-shopping')}}>Explore shopping concept<ArrowRight/></Button></>}
+ <Dialog open={modal!==null} onOpenChange={open=>{if(!open)setModal(null)}}><DialogContent className="max-w-xl w-[calc(100%-32px)] rounded-lg"><DialogTitle>{modal?.type==='compare'?'Compare your matched products':modal?.type==='insight'?selected?.name:modal?.type==='coming'?'The next generation is taking shape.':modal?.type==='audience'?`${modal.title?.replace('FOR ','')} · Coming marketplace`:modal?.title}</DialogTitle><DialogDescription>{modal?.type==='compare'?'Illustrative product comparison · Concept/demo data':modal?.type==='insight'?'Viral Radar AI · Illustrative intelligence, not live market analysis':modal?.type==='coming'?'BarangViral.Store is a UI/UX concept. Marketplace registration is not open yet.':modal?.type==='audience'?'A preview of the intelligence tools planned for the future marketplace.':'BarangViral.Store · Marketplace concept'}</DialogDescription>
+ {modal?.type==='compare'&&<><div className="overflow-x-auto"><table className="comparison-table"><thead><tr><th>Product</th><th>Price</th><th>Why it matched</th></tr></thead><tbody>{recommendedProducts.map(p=><tr key={p.id}><td>{p.name}</td><td>{p.current_price!==null?'RM'+Number(p.current_price).toFixed(2):'—'}</td><td>{recommendationReason(p,request,budget)}</td></tr>)}</tbody></table></div><p className="dialog-note">These are live catalogue products from BarangViral. Matching is based on your request, budget and available product attributes.</p></>}
+ {modal?.type==='insight'&&selected&&<><div className="metrics py-4"><div className="metric"><span>Price</span><strong>{selected.current_price!==null?'RM'+Number(selected.current_price).toFixed(2):'—'}</strong></div><div className="metric"><span>Rating</span><strong>{selected.rating?selected.rating.toFixed(1):'—'}</strong></div><div className="metric"><span>Reviews</span><strong>{selected.review_count||0}</strong></div><div className="metric"><span>Viral Score</span><strong>{Number(selected.viral_score||0).toFixed(0)}/100</strong></div></div><div className="recommendation"><strong><Sparkles size={12}/>MATCHING REASON</strong>{recommendationReason(selected,request,budget)}</div><p className="dialog-note">This recommendation comes from the BarangViral product catalogue. No paid AI API is used for this V1 matching engine.</p><Button variant="commerce" onClick={()=>{setModal(null);scrollTo('ai-shopping')}}>Back to AI Shopping<ArrowRight/></Button></>}
+
  {modal?.type==='offer'&&<><p className="dialog-note">This is a concept offer preview. Offer details, seller information and purchase links will be connected when the marketplace is operational.</p><Button variant="commerce" onClick={()=>{setModal(null);scrollTo('ai-shopping')}}>Explore with AI<ArrowRight/></Button></>}
  {modal?.type==='coming'&&<><p className="dialog-note">Explore the shopping assistant, product intelligence, and connected commerce journey today. Accounts, seller onboarding, and transactions will come in a future phase. No personal information is collected by this prototype.</p><Button variant="commerce" onClick={()=>{setModal(null);scrollTo('discover')}}>Explore the vision<ArrowRight/></Button></>}
  {modal?.type==='audience'&&<><ul className="space-y-3 my-3">{audiences.find(a=>a.label===modal.title)?.features.map(f=><li key={f} className="flex items-center gap-2 text-sm"><Check size={14} className="text-primary"/>{f}</li>)}</ul><p className="dialog-note">These capabilities are planned concepts, not active services. Explore Viral Radar to see an illustrative intelligence experience.</p><Button variant="commerce" onClick={()=>{setModal(null);scrollTo('viral-radar')}}>Explore Viral Radar<ArrowRight/></Button></>}
