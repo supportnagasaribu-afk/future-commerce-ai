@@ -32,11 +32,6 @@ type ShoppingProduct = {
  sold_count:number; description:string|null; category_name:string|null; source:string|null;
  product_url:string|null; viral_score:number;
 };
-const demoProducts = [
- {name:'Xiaomi Bluetooth Speaker Essential',category:'Audio & Lifestyle',price:69,reason:'Compact everyday entertainment for a small space',viral:0},
- {name:'Xiaomi Tag',category:'Accessories',price:59,reason:'Small and useful for keeping track of everyday items',viral:0},
- {name:'Xiaomi Smart Band 11 Active',category:'Wearables',price:119,reason:'Compact everyday fitness and activity tracking',viral:0},
-];
 
 const audiences = [
  {id:'buyers',label:'FOR BUYERS',title:'Shop Smarter With AI',icon:ShoppingBag,features:['AI product recommendations','Product comparison','Personalized discovery','Smart search','AI shopping assistant'],cta:'Find your next discovery'},
