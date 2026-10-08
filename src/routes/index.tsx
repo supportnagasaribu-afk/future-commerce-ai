@@ -42,30 +42,30 @@ const nav = [{label:'Home',href:'#home'},{label:'Discover',href:'#discover'},{la
 const productImages = [lampImage, fanImage, organizerImage];
 
 function AdSlot() {
- const banners = [
-  {name:'Shopee',label:'SHOPPING',href:'https://invl.me/clo2wjs',icon:ShoppingBag},
-  {name:'TikTok',label:'DISCOVER',href:'https://invl.app/clo2wlh',icon:Music2},
-  {name:'Xiaomi',label:'TECHNOLOGY',href:'https://invl.me/clo2wmj',icon:Smartphone},
-  {name:'JD Sports',label:'SPORT & STYLE',href:'https://invl.me/clo2wms',icon:Footprints},
- ];
  return <section className="ad-slot" aria-label="Advertisement">
   <div className="container-wide ad-slot-inner">
    <span className="ad-slot-label">ADVERTISEMENT</span>
-   <div className="ad-banner-grid">
-    {banners.map((banner)=><a key={banner.name} className="ad-banner-card" href={banner.href} target="_blank" rel="noopener noreferrer" aria-label={`Open ${banner.name} offer`}>
-      <div className="ad-banner-art"><banner.icon size={30} strokeWidth={1.4}/><span>{banner.name}</span></div>
-      <div className="ad-banner-copy"><strong>{banner.name}</strong><span>{banner.label} · SPONSORED</span></div>
-    </a>)}
-   </div>
    <div id="container-27e550765092d2708883eee468b3a67f" />
   </div>
  </section>;
 }
 
 function InPagePushSlot() {
- return <section className="inpage-push-slot" aria-label="In-Page Push Advertisement">
+ const banners = [
+  {name:'Shopee',label:'SHOPPING',href:'https://invl.me/clo2wjs',icon:ShoppingBag},
+  {name:'TikTok',label:'DISCOVER',href:'https://invl.app/clo2wlh',icon:Music2},
+  {name:'Xiaomi',label:'TECHNOLOGY',href:'https://invl.me/clo2wmj',icon:Smartphone},
+  {name:'JD Sports',label:'SPORT & STYLE',href:'https://invl.me/clo2wms',icon:Footprints},
+ ];
+ return <section className="inpage-push-slot" aria-label="Sponsored banner advertisements">
   <div className="container-wide inpage-push-inner">
    <span className="inpage-push-label">ADVERTISEMENT</span>
+   <div className="ad-banner-grid">
+    {banners.map((banner)=><a key={banner.name} className="ad-banner-card" href={banner.href} target="_blank" rel="noopener noreferrer" aria-label={`Open ${banner.name} offer`}>
+      <div className="ad-banner-art"><banner.icon size={30} strokeWidth={1.4}/><span>{banner.name}</span></div>
+      <div className="ad-banner-copy"><strong>{banner.name}</strong><span>{banner.label} · SPONSORED</span></div>
+    </a>)}
+   </div>
    <div id="inpage-push-ad-slot" />
   </div>
  </section>;
