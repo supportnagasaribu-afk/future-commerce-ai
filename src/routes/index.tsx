@@ -75,16 +75,6 @@ function Index() {
   return () => script.remove();
  }, []);
 
- useEffect(() => {
-  if (document.querySelector('script[data-barangviral-ad="inpage-push"]')) return;
-  const script = document.createElement('script');
-  script.setAttribute('data-barangviral-ad', 'inpage-push');
-  script.dataset.zone = '11970451';
-  script.src = 'https://nap5k.com/tag.min.js';
-  script.async = true;
-  document.body.appendChild(script);
-  return () => script.remove();
- }, []);
 
  const [mobileOpen,setMobileOpen] = useState(false);
  const [input,setInput] = useState('');
