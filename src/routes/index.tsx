@@ -55,7 +55,7 @@ function InPagePushSlot() {
   {name:'Shopee',label:'SHOPPING',href:'https://invl.me/clo2wjs',logo:'https://zonalogo.com/assets/logo-shopee.webp'},
   {name:'TikTok',label:'DISCOVER',href:'https://invl.app/clo2wlh',logo:'https://www.citypng.com/public/uploads/preview/tik-tok-logo-icon-701751694793267gxetcvvp3v.png?v=2026040220'},
   {name:'Xiaomi',label:'TECHNOLOGY',href:'https://invl.me/clo2wmj',logo:'https://www.citypng.com/public/uploads/preview/square-mi-xiaomi-xiomi-official-symbol-logo-icon-701751695132579rgtvvwugt6.png?v=2026022307'},
-  {name:'JD Sports',label:'SPORT & STYLE',href:'https://invl.me/clo2wms',logo:'https://cdn.rundlemall.com/app/uploads/2026/03/JD_Sports_logo-1.jpg'},
+  {name:'JD Sports',label:'SPORT & STYLE',href:'https://invl.me/clo2wms',logo:'https://img.involve.asia/rpss/campaigns_banners/38283-F6wDTqEGPyg3fu4ajrl3FTsB9UY8nAk9.jpeg'},
  ];
  return <section className="inpage-push-slot" aria-label="Sponsored banner advertisements">
   <div className="container-wide inpage-push-inner">
