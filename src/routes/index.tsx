@@ -76,6 +76,16 @@ function Index() {
  }, []);
 
 
+ useEffect(() => {
+  if (document.querySelector('script[data-barangviral-ad="vignette"]')) return;
+  const script = document.createElement('script');
+  script.setAttribute('data-barangviral-ad', 'vignette');
+  script.dataset.zone = '11983050';
+  script.src = 'https://n6wxm.com/vignette.min.js';
+  document.body.appendChild(script);
+  return () => script.remove();
+ }, []);
+
  const [mobileOpen,setMobileOpen] = useState(false);
  const [input,setInput] = useState('');
  const [request,setRequest] = useState('Find me the best products under RM100 for a small home.');
