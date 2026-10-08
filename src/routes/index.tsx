@@ -52,17 +52,17 @@ function AdSlot() {
 
 function InPagePushSlot() {
  const banners = [
-  {name:'Shopee',label:'SHOPPING',href:'https://invl.me/clo2wjs',icon:ShoppingBag},
-  {name:'TikTok',label:'DISCOVER',href:'https://invl.app/clo2wlh',icon:Music2},
-  {name:'Xiaomi',label:'TECHNOLOGY',href:'https://invl.me/clo2wmj',icon:Smartphone},
-  {name:'JD Sports',label:'SPORT & STYLE',href:'https://invl.me/clo2wms',icon:Footprints},
+  {name:'Shopee',label:'SHOPPING',href:'https://invl.me/clo2wjs',logo:'https://zonalogo.com/assets/logo-shopee.webp'},
+  {name:'TikTok',label:'DISCOVER',href:'https://invl.app/clo2wlh',logo:'https://www.citypng.com/public/uploads/preview/tik-tok-logo-icon-701751694793267gxetcvvp3v.png?v=2026040220'},
+  {name:'Xiaomi',label:'TECHNOLOGY',href:'https://invl.me/clo2wmj',logo:'https://www.citypng.com/public/uploads/preview/square-mi-xiaomi-xiomi-official-symbol-logo-icon-701751695132579rgtvvwugt6.png?v=2026022307'},
+  {name:'JD Sports',label:'SPORT & STYLE',href:'https://invl.me/clo2wms',logo:'https://cdn.rundlemall.com/app/uploads/2026/03/JD_Sports_logo-1.jpg'},
  ];
  return <section className="inpage-push-slot" aria-label="Sponsored banner advertisements">
   <div className="container-wide inpage-push-inner">
    <span className="inpage-push-label">ADVERTISEMENT</span>
    <div className="ad-banner-grid">
     {banners.map((banner)=><a key={banner.name} className="ad-banner-card" href={banner.href} target="_blank" rel="noopener noreferrer" aria-label={`Open ${banner.name} offer`}>
-      <div className="ad-banner-art"><banner.icon size={30} strokeWidth={1.4}/><span>{banner.name}</span></div>
+      <div className="ad-banner-art"><img src={banner.logo} alt={`${banner.name} logo`} loading="lazy"/><span>{banner.name}</span></div>
       <div className="ad-banner-copy"><strong>{banner.name}</strong><span>{banner.label} · SPONSORED</span></div>
     </a>)}
    </div>
