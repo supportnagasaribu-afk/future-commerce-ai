@@ -49,6 +49,15 @@ function AdSlot() {
   </div>
  </section>;
 }
+
+function InPagePushSlot() {
+ return <section className="inpage-push-slot" aria-label="In-Page Push Advertisement">
+  <div className="container-wide inpage-push-inner">
+   <span className="inpage-push-label">ADVERTISEMENT</span>
+   <div id="inpage-push-ad-slot" />
+  </div>
+ </section>;
+}
 function ProductVisual({index}:{index:number}) {return <div className="product-visual"><img src={productImages[index]} alt={products[index]?.name ?? 'Demo product'} width={512} height={1024} loading="lazy"/></div>}
 function Eyebrow({children}:{children:React.ReactNode}) {return <div className="eyebrow"><span className="eyebrow-dot"/>{children}</div>}
 function Index() {
@@ -90,6 +99,7 @@ function Index() {
  <div className="hero-flow" aria-label="AI to intelligence to discovery to matching to commerce">{steps.map((s,i)=><span key={s.name} className="contents"><span className={`flow-word ${i===0?'first':''}`}><s.icon/>{s.name}</span>{i<4&&<ArrowRight className="flow-arrow"/>}</span>)}</div>
  </div><div className="hero-footnote">INTELLIGENCE AT THE CORE. COMMERCE AT THE EDGE.</div></section>
  <AdSlot />
+ <InPagePushSlot />
  <section className="journey" id="discover"><div className="container-wide"><div className="section-heading centered"><Eyebrow>ONE CONNECTED JOURNEY</Eyebrow><h2>From intent to opportunity. From opportunity to commerce.</h2><p>Five intelligent stages. One seamlessly connected ecosystem.</p></div><div className="journey-grid">{steps.map((s,i)=><article className="journey-stage" key={s.name}><div className="stage-icon"><s.icon size={20} strokeWidth={1.5}/></div>{i<4&&<div className="stage-line"><ChevronRight/></div>}<div className="stage-number">STEP 0{i+1}</div><h3>{s.name}</h3><h4>{s.title}</h4><p>{s.description}</p></article>)}</div></div></section>
  <section className="section assistant-section" id="ai-shopping"><div className="container-wide"><div className="section-topline"><div className="section-heading"><Eyebrow>YOUR INTELLIGENT SHOPPING COMPANION</Eyebrow><h2>Not just search. Understanding.</h2><p>A shopping experience that starts with what you need — not what you type.</p></div><span className="demo-tag"><CircleDot size={11}/>INTERACTIVE CONCEPT · DEMO DATA</span></div>
  <div className="assistant-window"><div className="assistant-titlebar"><div className="assistant-name"><span className="ai-mark"><Sparkles size={16}/></span>BarangViral AI<span className="text-muted-foreground font-normal hidden sm:inline">/ Shopping assistant</span></div><span className="assistant-status"><span className="eyebrow-dot"/>CONCEPT PREVIEW</span></div>
