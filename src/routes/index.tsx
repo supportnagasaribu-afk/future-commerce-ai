@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router';
-import { useState, type FormEvent } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import { ArrowRight, ArrowUpRight, ArrowUp, Sparkles, BrainCircuit, ScanSearch, Network, ShoppingBag, TrendingUp, Radar, Check, SlidersHorizontal, Menu, X, Play, Store, Package, Megaphone, ShieldCheck, Fingerprint, Layers, Database, RefreshCw, Box, ChartNoAxesCombined, GitCompareArrows, ChevronRight, CircleDot } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
@@ -52,6 +52,20 @@ function AdSlot() {
 function ProductVisual({index}:{index:number}) {return <div className="product-visual"><img src={productImages[index]} alt={products[index]?.name ?? 'Demo product'} width={512} height={1024} loading="lazy"/></div>}
 function Eyebrow({children}:{children:React.ReactNode}) {return <div className="eyebrow"><span className="eyebrow-dot"/>{children}</div>}
 function Index() {
+ useEffect(() => {
+  const containerId = 'container-27e550765092d2708883eee468b3a67f';
+  const scriptSrc = 'https://bauval.org/21/27e550765092d2708883eee468b3a67f';
+  if (document.querySelector('script[data-barangviral-ad="bauval"]')) return;
+  const script = document.createElement('script');
+  script.async = true;
+  script.setAttribute('data-cfasync', 'false');
+  script.setAttribute('data-barangviral-ad', 'bauval');
+  script.src = scriptSrc;
+  const container = document.getElementById(containerId);
+  if (container) container.appendChild(script);
+  return () => script.remove();
+ }, []);
+
  const [mobileOpen,setMobileOpen] = useState(false);
  const [input,setInput] = useState('');
  const [request,setRequest] = useState('Find me the best products under RM100 for a small home.');
