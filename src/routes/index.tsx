@@ -97,10 +97,10 @@ function Index() {
   let cancelled=false;
   async function loadShoppingProducts() {
    try {
-    const res=await fetch(SUPABASE_URL+'/rest/v1/products?select=id,name,brand,image_url,current_price,original_price,discount_percent,rating,review_count,sold_count,description,viral_score,source,product_url,category:categories(name)&order=viral_score.desc,created_at.desc&limit=50',{headers:{apikey:SUPABASE_KEY,Authorization:'Bearer '+SUPABASE_KEY}});
+    const res=await fetch(SUPABASE_URL+'/rest/v1/products?select=id,name,brand,image_url,current_price,original_price,discount_percent,rating,review_count,sold_count,description,viral_score,source,product_url&order=viral_score.desc,created_at.desc&limit=50',{headers:{apikey:SUPABASE_KEY,Authorization:'Bearer '+SUPABASE_KEY}});
     if(!res.ok) throw new Error('Shopping product request failed');
     const data=await res.json();
-    const mapped=Array.isArray(data)?data.map((p:any)=>({...p,category_name:p.category?.name ?? null})):[]; 
+    const mapped=Array.isArray(data)?data.map((p:any)=>({...p,category_name:null})):[]; 
     if(!cancelled) setShoppingProducts(mapped);
    } catch { if(!cancelled) setShoppingProducts([]); }
    finally { if(!cancelled) setShoppingLoading(false); }
