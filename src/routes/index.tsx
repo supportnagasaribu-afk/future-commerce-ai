@@ -40,6 +40,9 @@ const audiences = [
 const wheel = [{name:'PRODUCT',icon:Box},{name:'DATA',icon:Database},{name:'AI INTELLIGENCE',icon:BrainCircuit},{name:'DISCOVERY',icon:ScanSearch},{name:'MATCHING',icon:Network},{name:'TRANSACTION',icon:ShoppingBag},{name:'MORE DATA',icon:Layers},{name:'SMARTER AI',icon:RefreshCw}];
 const nav = [{label:'Home',href:'#home'},{label:'Discover',href:'#discover'},{label:'AI Shopping',href:'#ai-shopping'},{label:'Viral Radar',href:'#viral-radar'},{label:'For Sellers',href:'#sellers'},{label:'For Partners',href:'#partners'}];
 const productImages = [lampImage, fanImage, organizerImage];
+type RadarProduct = { product_id:string; name:string; brand:string|null; image_url:string|null; current_price:number|null; currency:string; viral_score:number; radar_status:string; trend_direction:string|null; google_score:number; tiktok_score:number; social_score:number; sales_score:number; growth_score:number; engagement_score:number; signal_recorded_at:string|null };
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://bzrhhuupcnfgxejndxjo.supabase.co';
+const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || 'sb_publishable_MzM7ufbE0ajl9uk4eowbtw_eJNpjofH';
 
 function AdSlot() {
  return <section className="ad-slot" aria-label="Advertisement">
@@ -87,12 +90,29 @@ function Index() {
   return () => script.remove();
  }, []);
 
+ useEffect(() => {
+  let cancelled = false;
+  async function loadRadar() {
+   try {
+    const res = await fetch(SUPABASE_URL + '/rest/v1/viral_radar_v1?select=*&order=viral_score.desc&limit=3', {headers:{apikey:SUPABASE_KEY,Authorization:'Bearer '+SUPABASE_KEY}});
+    if (!res.ok) throw new Error('Radar request failed');
+    const data = await res.json();
+    if (!cancelled) setRadarProducts(Array.isArray(data) ? data : []);
+   } catch { if (!cancelled) setRadarProducts([]); }
+   finally { if (!cancelled) setRadarLoading(false); }
+  }
+  loadRadar();
+  return () => { cancelled = true; };
+ }, []);
+
 
  const [mobileOpen,setMobileOpen] = useState(false);
  const [input,setInput] = useState('');
  const [request,setRequest] = useState('Find me the best products under RM100 for a small home.');
  const [submitted,setSubmitted] = useState(false);
  const [modal,setModal] = useState<{type:string;index?:number;title?:string}|null>(null);
+ const [radarProducts,setRadarProducts] = useState<RadarProduct[]>([]);
+ const [radarLoading,setRadarLoading] = useState(true);
  function submit(e:FormEvent) {e.preventDefault();if(!input.trim())return;setRequest(input.trim());setInput('');setSubmitted(true)}
  function scrollTo(id:string) {document.getElementById(id)?.scrollIntoView({behavior:'smooth'});setMobileOpen(false)}
  const selected = modal?.index !== undefined ? products[modal.index] : undefined;
@@ -130,7 +150,7 @@ function Index() {
    <a className="sponsored-offers-cta" href="https://invl.app/clo2wif" target="_blank" rel="noopener noreferrer">Explore Offers <ArrowUpRight size={14}/></a>
   </div>
  </section>
- <section className="section" id="viral-radar"><div className="container-wide"><div className="section-topline"><div className="section-heading"><Eyebrow><Radar size={13}/>SIGNALS. NOT GUESSWORK.</Eyebrow><h2>Viral Radar <span className="text-primary">AI</span></h2><p>Discover products before the trend becomes obvious.</p></div><span className="demo-tag"><SlidersHorizontal size={11}/>ILLUSTRATIVE INTELLIGENCE · DEMO DATA</span></div><div className="radar-grid">{products.map((p,i)=><article className="radar-card" key={p.name}><div className="radar-image"><ProductVisual index={i}/><span className="radar-label"><TrendingUp size={11}/>{p.tag}</span></div><div className="radar-content"><span className="radar-category">{p.category}</span><h3>{p.name}</h3><div className="metrics">{[['Viral Score',`${p.viral}/100`],['Growth Score',`${p.growth}/100`],['Competition',p.competition],['Opportunity',`${p.opportunity}/100`],['Demand',p.demand],['Signal','Concept data']].map(([k,v])=><div className="metric" key={k}><span>{k==='Opportunity'?'Opportunity Score':k}</span><strong className={k==='Opportunity'||k==='Demand'?'metric-positive':''}>{v}</strong></div>)}</div><div className="recommendation"><strong><Sparkles size={11}/>AI RECOMMENDATION</strong>{p.recommendation}</div><Button variant="ghost" className="insight-button" onClick={()=>setModal({type:'insight',index:i})}>Explore product intelligence<ArrowUpRight/></Button></div></article>)}</div></div></section>
+ <section className="section" id="viral-radar"><div className="container-wide"><div className="section-topline"><div className="section-heading"><Eyebrow><Radar size={13}/>SIGNALS. NOT GUESSWORK.</Eyebrow><h2>Viral Radar <span className="text-primary">AI</span></h2><p>Discover products before the trend becomes obvious.</p></div><span className="demo-tag"><SlidersHorizontal size={11}/>LIVE SIGNAL ENGINE · V1</span></div><div className="radar-grid">{radarLoading ? [0,1,2].map(i=><article className="radar-card" key={i}><div className="radar-content"><span className="radar-category">VIRAL RADAR</span><h3>Loading intelligence…</h3><div className="metrics"><div className="metric"><span>Viral Score</span><strong>—</strong></div><div className="metric"><span>Growth</span><strong>—</strong></div><div className="metric"><span>Demand</span><strong>—</strong></div></div></div></article>) : radarProducts.length ? radarProducts.map((p)=><article className="radar-card" key={p.product_id}><div className="radar-image">{p.image_url ? <div className="product-visual"><img src={p.image_url} alt={p.name} width={512} height={1024} loading="lazy"/></div> : <ProductVisual index={0}/>}<span className="radar-label"><TrendingUp size={11}/>{p.radar_status}</span></div><div className="radar-content"><span className="radar-category">{p.brand || 'PRODUCT SIGNAL'}</span><h3>{p.name}</h3><div className="metrics"><div className="metric"><span>Viral Score</span><strong className="metric-positive">{Number(p.viral_score).toFixed(0)}/100</strong></div><div className="metric"><span>Growth Score</span><strong>{Number(p.growth_score||0).toFixed(0)}/100</strong></div><div className="metric"><span>Demand Signal</span><strong>{Number(p.sales_score||0).toFixed(0)}/100</strong></div><div className="metric"><span>Engagement</span><strong>{Number(p.engagement_score||0).toFixed(0)}/100</strong></div><div className="metric"><span>Search</span><strong>{Number(p.google_score||0).toFixed(0)}/100</strong></div><div className="metric"><span>Social</span><strong>{Number(p.social_score||0).toFixed(0)}/100</strong></div></div><div className="recommendation"><strong><Sparkles size={11}/>RADAR SIGNAL</strong>{p.trend_direction ? `Status: ${p.trend_direction}. The score is calculated from the latest available signals.` : 'The radar is ready for incoming product signals.'}</div><Button variant="ghost" className="insight-button" onClick={()=>setModal({type:'radar',title:p.name})}>View product intelligence<ArrowUpRight/></Button></div></article>) : <article className="radar-card"><div className="radar-content"><span className="radar-category">SIGNAL ENGINE V1</span><h3>No live product signals yet.</h3><p>Viral Radar is connected to Supabase and will populate as products and trend signals enter the system.</p></div></article>}</div></div></section>
  <section className="section audience-section"><div className="container-wide"><div className="section-heading centered"><Eyebrow>BUILT FOR EVERY SIDE OF COMMERCE</Eyebrow><h2>Different ambitions. One intelligent ecosystem.</h2><p>The right intelligence for the role you play.</p></div><div className="audience-grid">{audiences.map(a=><article className="audience" id={a.id} key={a.id}><a.icon className="audience-icon" size={27} strokeWidth={1.5}/><div className="audience-label">{a.label}</div><h3>{a.title}</h3><ul>{a.features.map(f=><li key={f}><Check/>{f}</li>)}</ul><Button variant="ghost" onClick={()=>a.id==='buyers'?scrollTo('ai-shopping'):setModal({type:'audience',title:a.label})}>{a.cta}<ArrowUpRight/></Button></article>)}</div></div></section>
  <section className="section flywheel-section" id="ai-commerce"><div className="container-wide flywheel-layout"><div className="section-heading"><Eyebrow>THE AI COMMERCE FLYWHEEL</Eyebrow><h2>Every connection.<br/>A smarter ecosystem.</h2><p>Products create data. Data creates intelligence. Intelligence creates better discovery, stronger matches, and more meaningful commerce.</p><div className="flywheel-note">And with every transaction, the cycle begins again — making the next experience smarter than the last.</div></div><div><div className="flywheel"><div className="flywheel-ring"/><div className="flywheel-center"><BrainCircuit/><span>INTELLIGENT<br/>COMMERCE</span></div>{wheel.map((w,i)=><div className={`wheel-node wheel-node-${i}`} key={w.name}><w.icon strokeWidth={1.5}/><span>{w.name}</span><em aria-hidden="true">↘</em></div>)}</div><div className="flywheel-caption">A CONTINUOUS CYCLE OF COMMERCE INTELLIGENCE</div></div></div></section>
  <section className="vision" id="about"><div className="container-wide vision-inner"><div className="section-heading"><Eyebrow>OUR VISION</Eyebrow><h2>The Future of Commerce<br/>Is Intelligent.</h2></div><div className="vision-copy"><p>BarangViral.Store is being built to connect people, products, data and opportunities through AI. Not simply another marketplace — an intelligent foundation for how commerce discovers, connects and grows.</p><p>A future where better understanding leads to better decisions. For everyone.</p><div className="vision-principles"><span><ShieldCheck/>Trust by design</span><span><Fingerprint/>Human-centered AI</span><span><Network/>Connected opportunities</span></div></div></div></section>
