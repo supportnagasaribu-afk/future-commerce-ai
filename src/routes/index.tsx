@@ -1,24 +1,90 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute } from '@tanstack/react-router';
+import { useState, type FormEvent } from 'react';
+import { ArrowRight, ArrowUpRight, ArrowUp, Sparkles, BrainCircuit, ScanSearch, Network, ShoppingBag, TrendingUp, Radar, Check, SlidersHorizontal, Menu, X, Play, Store, Package, Megaphone, ShieldCheck, Fingerprint, Layers, Database, RefreshCw, Box, ChartNoAxesCombined, GitCompareArrows, ChevronRight, CircleDot } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import logo from '@/assets/barangviral-logo.png.asset.json';
+import heroImage from '@/assets/commerce-hero.jpg';
+import lampImage from '@/assets/product-0.jpg';
+import fanImage from '@/assets/product-1.jpg';
+import organizerImage from '@/assets/product-2.jpg';
 
-// No head() here: the home route inherits title/description/og/twitter from
-// __root.tsx, and ships no og:image so serve-time hosting can inject the
-// project's social preview (explicit og:image or latest screenshot).
-export const Route = createFileRoute("/")({
-  component: Index,
+export const Route = createFileRoute('/')({
+ head: () => ({ meta: [
+ {title:'BarangViral.Store — AI-Powered Commerce. Smarter Decisions.'},
+ {name:'description',content:'Discover the future of intelligent commerce. Explore AI shopping, Viral Radar, and smarter opportunities for buyers, sellers, suppliers, and partners.'},
+ {property:'og:title',content:'BarangViral.Store — AI-Powered Commerce'},
+ {property:'og:description',content:'From intelligence to discovery, matching, and commerce. Explore the BarangViral.Store marketplace concept.'},
+ {property:'og:type',content:'website'}, {name:'twitter:card',content:'summary_large_image'},
+ ]}), component: Index,
 });
-
-// IMPORTANT: Replace this placeholder. See ./README.md for routing conventions.
+const steps = [
+ {name:'AI',title:'Understand Intent',description:'AI understands what buyers, sellers, suppliers and partners need.',icon:BrainCircuit},
+ {name:'INTELLIGENCE',title:'Turn Data Into Opportunity',description:'Transform commerce signals into useful intelligence.',icon:ChartNoAxesCombined},
+ {name:'DISCOVERY',title:'Find What Matters',description:'Discover trending products, emerging opportunities and relevant products.',icon:ScanSearch},
+ {name:'MATCHING',title:'Connect the Right People',description:'Match buyers, sellers, suppliers and partners intelligently.',icon:Network},
+ {name:'COMMERCE',title:'Turn Opportunities Into Sales',description:'Convert better recommendations and connections into real commerce.',icon:ShoppingBag},
+];
+const products = [
+ {name:'Ambient LED Table Lamp',category:'Home & living',price:79,reason:'Warm lighting, small footprint',viral:92,growth:87,competition:'Medium',opportunity:91,demand:'Rising',recommendation:'A strong discovery opportunity for small-space living.',tag:'High opportunity'},
+ {name:'Portable Rechargeable Fan',category:'Lifestyle & essentials',price:39,reason:'Portable, rechargeable comfort',viral:88,growth:94,competition:'High',opportunity:84,demand:'High',recommendation:'Differentiate with portability and everyday convenience.',tag:'Trending signal'},
+ {name:'Modular Desk Organizer',category:'Home & workspace',price:59,reason:'Flexible storage for compact spaces',viral:85,growth:81,competition:'Low',opportunity:93,demand:'Growing',recommendation:'Explore the compact workspace niche with useful content.',tag:'Emerging opportunity'},
+];
+const audiences = [
+ {id:'buyers',label:'FOR BUYERS',title:'Shop Smarter With AI',icon:ShoppingBag,features:['AI product recommendations','Product comparison','Personalized discovery','Smart search','AI shopping assistant'],cta:'Find your next discovery'},
+ {id:'sellers',label:'FOR SELLERS',title:'Sell Smarter With AI',icon:Store,features:['AI product optimization','Pricing intelligence','Product analysis','Marketing ideas','Campaign assistance','AI sales insights'],cta:'Explore seller intelligence'},
+ {id:'suppliers',label:'FOR SUPPLIERS',title:'Find New Commerce Opportunities',icon:Package,features:['Product opportunity discovery','Market intelligence','Seller matching','Partner matching','Demand signals'],cta:'Discover opportunities'},
+ {id:'partners',label:'FOR VIRAL PARTNERS',title:'Know What To Promote',icon:Megaphone,features:['Trending product discovery','Opportunity scoring','AI content ideas','Product recommendations','Performance insights'],cta:'Explore partner opportunities'},
+];
+const wheel = [{name:'PRODUCT',icon:Box},{name:'DATA',icon:Database},{name:'AI INTELLIGENCE',icon:BrainCircuit},{name:'DISCOVERY',icon:ScanSearch},{name:'MATCHING',icon:Network},{name:'TRANSACTION',icon:ShoppingBag},{name:'MORE DATA',icon:Layers},{name:'SMARTER AI',icon:RefreshCw}];
+const nav = [{label:'Home',href:'#home'},{label:'Discover',href:'#discover'},{label:'AI Shopping',href:'#ai-shopping'},{label:'Viral Radar',href:'#viral-radar'},{label:'For Sellers',href:'#sellers'},{label:'For Partners',href:'#partners'}];
+const productImages = [lampImage, fanImage, organizerImage];
+function ProductVisual({index}:{index:number}) {return <div className="product-visual"><img src={productImages[index]} alt={products[index]?.name ?? 'Demo product'} width={512} height={1024} loading="lazy"/></div>}
+function Eyebrow({children}:{children:React.ReactNode}) {return <div className="eyebrow"><span className="eyebrow-dot"/>{children}</div>}
 function Index() {
-  return (
-    <div
-      className="flex min-h-screen items-center justify-center"
-      style={{ backgroundColor: "#fcfbf8" }}
-    >
-      <img
-        data-lovable-blank-page-placeholder="REMOVE_THIS"
-        src="https://cdn.gpteng.co/blank-app-v1.svg"
-        alt="Your app will live here!"
-      />
-    </div>
-  );
+ const [mobileOpen,setMobileOpen] = useState(false);
+ const [input,setInput] = useState('');
+ const [request,setRequest] = useState('Find me the best products under RM100 for a small home.');
+ const [submitted,setSubmitted] = useState(false);
+ const [modal,setModal] = useState<{type:string;index?:number;title?:string}|null>(null);
+ function submit(e:FormEvent) {e.preventDefault();if(!input.trim())return;setRequest(input.trim());setInput('');setSubmitted(true)}
+ function scrollTo(id:string) {document.getElementById(id)?.scrollIntoView({behavior:'smooth'});setMobileOpen(false)}
+ const selected = modal?.index !== undefined ? products[modal.index] : undefined;
+ return <>
+ <header className="site-header" id="home"><div className="container-wide header-inner">
+ <a href="#home" aria-label="BarangViral.Store home"><img className="brand-image" src={logo.url} alt="BarangViral.Store" width={1920} height={640}/></a>
+ <nav className="desktop-nav" aria-label="Main navigation">{nav.map((n,i)=><a key={n.label} className={i===0?'active':''} href={n.href}>{n.label}</a>)}</nav>
+ <Button variant="commerce" className="header-cta" onClick={()=>scrollTo('ai-shopping')}>Explore with AI <ArrowUpRight/></Button>
+ <Button variant="light" size="icon" className="mobile-menu-toggle" aria-label={mobileOpen?'Close menu':'Open menu'} aria-expanded={mobileOpen} onClick={()=>setMobileOpen(!mobileOpen)}>{mobileOpen?<X/>:<Menu/>}</Button>
+ </div>{mobileOpen&&<nav className="mobile-nav" aria-label="Mobile navigation">{nav.map(n=><a key={n.label} href={n.href} onClick={()=>setMobileOpen(false)}>{n.label}</a>)}</nav>}</header>
+ <main>
+ <section className="hero"><img src={heroImage} className="hero-art" alt="Products connected by a sculptural orange commerce orbit" width={1920} height={1024} fetchPriority="high"/>
+ <div className="container-wide hero-copy"><Eyebrow>THE NEXT GENERATION OF AI COMMERCE</Eyebrow>
+ <h1>AI-Powered Commerce.<br/><span>Smarter Decisions.</span></h1>
+ <p className="hero-description">Discover products, identify opportunities, connect the right people,<br className="hidden sm:block"/> and turn intelligence into commerce.</p>
+ <div className="hero-actions"><Button variant="commerce" onClick={()=>scrollTo('ai-shopping')}><Sparkles/>Explore AI Commerce<ArrowUpRight/></Button><Button variant="light" onClick={()=>scrollTo('discover')}><Play size={13}/>See How It Works</Button></div>
+ <div className="hero-flow" aria-label="AI to intelligence to discovery to matching to commerce">{steps.map((s,i)=><span key={s.name} className="contents"><span className={`flow-word ${i===0?'first':''}`}><s.icon/>{s.name}</span>{i<4&&<ArrowRight className="flow-arrow"/>}</span>)}</div>
+ </div><div className="hero-footnote">INTELLIGENCE AT THE CORE. COMMERCE AT THE EDGE.</div></section>
+ <section className="journey" id="discover"><div className="container-wide"><div className="section-heading centered"><Eyebrow>ONE CONNECTED JOURNEY</Eyebrow><h2>From intent to opportunity. From opportunity to commerce.</h2><p>Five intelligent stages. One seamlessly connected ecosystem.</p></div><div className="journey-grid">{steps.map((s,i)=><article className="journey-stage" key={s.name}><div className="stage-icon"><s.icon size={20} strokeWidth={1.5}/></div>{i<4&&<div className="stage-line"><ChevronRight/></div>}<div className="stage-number">STEP 0{i+1}</div><h3>{s.name}</h3><h4>{s.title}</h4><p>{s.description}</p></article>)}</div></div></section>
+ <section className="section assistant-section" id="ai-shopping"><div className="container-wide"><div className="section-topline"><div className="section-heading"><Eyebrow>YOUR INTELLIGENT SHOPPING COMPANION</Eyebrow><h2>Not just search. Understanding.</h2><p>A shopping experience that starts with what you need — not what you type.</p></div><span className="demo-tag"><CircleDot size={11}/>INTERACTIVE CONCEPT · DEMO DATA</span></div>
+ <div className="assistant-window"><div className="assistant-titlebar"><div className="assistant-name"><span className="ai-mark"><Sparkles size={16}/></span>BarangViral AI<span className="text-muted-foreground font-normal hidden sm:inline">/ Shopping assistant</span></div><span className="assistant-status"><span className="eyebrow-dot"/>CONCEPT PREVIEW</span></div>
+ <div className="assistant-body"><div className="chat-side"><div className="user-message">{request}</div><div className="ai-message"><span className="ai-mark shrink-0"><Sparkles size={15}/></span><div><strong>{submitted?'Let’s explore your idea.':'Small space. Smart finds.'}</strong><p>{submitted?'This concept uses a curated sample collection, not a live AI response. Here are three example recommendations to explore and compare.':'I’ve picked three useful finds that fit your space and your budget. Here’s why they could be a great match.'}</p><div className="intent-chips"><span><Check size={9} className="inline mr-1"/>Under RM100</span><span>Small-space friendly</span><span>Everyday value</span></div></div></div><div className="assistant-tip"><BrainCircuit size={14} className="inline mr-2 text-primary"/>Beyond the product: understand the fit, compare the options, and decide with confidence.</div>
+ <form className="chat-input" onSubmit={submit}><input aria-label="Ask the AI shopping assistant" value={input} onChange={e=>setInput(e.target.value)} placeholder="Tell me what you’re looking for…"/><Button variant="commerce" size="icon" aria-label="Send request" type="submit" disabled={!input.trim()}><ArrowUp/></Button></form></div>
+ <div className="suggestions"><div className="suggestions-heading">CURATED FOR YOUR SPACE <span>3 demo recommendations</span></div>{products.map((p,i)=><div className="product-row" key={p.name}><ProductVisual index={i}/><div className="min-w-0"><h4>{p.name}</h4><p>{p.reason}</p><small><Check size={10}/>Why it fits your needs</small></div><span className="product-price">RM{p.price}</span></div>)}<div className="compare-action"><span>Illustrative products & prices</span><Button variant="outline" size="sm" onClick={()=>setModal({type:'compare'})}><GitCompareArrows/>Compare options</Button></div></div></div></div>
+ </div></section>
+ <section className="section" id="viral-radar"><div className="container-wide"><div className="section-topline"><div className="section-heading"><Eyebrow><Radar size={13}/>SIGNALS. NOT GUESSWORK.</Eyebrow><h2>Viral Radar <span className="text-primary">AI</span></h2><p>Discover products before the trend becomes obvious.</p></div><span className="demo-tag"><SlidersHorizontal size={11}/>ILLUSTRATIVE INTELLIGENCE · DEMO DATA</span></div><div className="radar-grid">{products.map((p,i)=><article className="radar-card" key={p.name}><div className="radar-image"><ProductVisual index={i}/><span className="radar-label"><TrendingUp size={11}/>{p.tag}</span></div><div className="radar-content"><span className="radar-category">{p.category}</span><h3>{p.name}</h3><div className="metrics">{[['Viral Score',`${p.viral}/100`],['Growth Score',`${p.growth}/100`],['Competition',p.competition],['Opportunity',`${p.opportunity}/100`],['Demand',p.demand],['Signal','Concept data']].map(([k,v])=><div className="metric" key={k}><span>{k==='Opportunity'?'Opportunity Score':k}</span><strong className={k==='Opportunity'||k==='Demand'?'metric-positive':''}>{v}</strong></div>)}</div><div className="recommendation"><strong><Sparkles size={11}/>AI RECOMMENDATION</strong>{p.recommendation}</div><Button variant="ghost" className="insight-button" onClick={()=>setModal({type:'insight',index:i})}>Explore product intelligence<ArrowUpRight/></Button></div></article>)}</div></div></section>
+ <section className="section audience-section"><div className="container-wide"><div className="section-heading centered"><Eyebrow>BUILT FOR EVERY SIDE OF COMMERCE</Eyebrow><h2>Different ambitions. One intelligent ecosystem.</h2><p>The right intelligence for the role you play.</p></div><div className="audience-grid">{audiences.map(a=><article className="audience" id={a.id} key={a.id}><a.icon className="audience-icon" size={27} strokeWidth={1.5}/><div className="audience-label">{a.label}</div><h3>{a.title}</h3><ul>{a.features.map(f=><li key={f}><Check/>{f}</li>)}</ul><Button variant="ghost" onClick={()=>a.id==='buyers'?scrollTo('ai-shopping'):setModal({type:'audience',title:a.label})}>{a.cta}<ArrowUpRight/></Button></article>)}</div></div></section>
+ <section className="section flywheel-section" id="ai-commerce"><div className="container-wide flywheel-layout"><div className="section-heading"><Eyebrow>THE AI COMMERCE FLYWHEEL</Eyebrow><h2>Every connection.<br/>A smarter ecosystem.</h2><p>Products create data. Data creates intelligence. Intelligence creates better discovery, stronger matches, and more meaningful commerce.</p><div className="flywheel-note">And with every transaction, the cycle begins again — making the next experience smarter than the last.</div></div><div><div className="flywheel"><div className="flywheel-ring"/><div className="flywheel-center"><BrainCircuit/><span>INTELLIGENT<br/>COMMERCE</span></div>{wheel.map((w,i)=><div className={`wheel-node wheel-node-${i}`} key={w.name}><w.icon strokeWidth={1.5}/><span>{w.name}</span><em aria-hidden="true">↘</em></div>)}</div><div className="flywheel-caption">A CONTINUOUS CYCLE OF COMMERCE INTELLIGENCE</div></div></div></section>
+ <section className="vision" id="about"><div className="container-wide vision-inner"><div className="section-heading"><Eyebrow>OUR VISION</Eyebrow><h2>The Future of Commerce<br/>Is Intelligent.</h2></div><div className="vision-copy"><p>BarangViral.Store is being built to connect people, products, data and opportunities through AI. Not simply another marketplace — an intelligent foundation for how commerce discovers, connects and grows.</p><p>A future where better understanding leads to better decisions. For everyone.</p><div className="vision-principles"><span><ShieldCheck/>Trust by design</span><span><Fingerprint/>Human-centered AI</span><span><Network/>Connected opportunities</span></div></div></div></section>
+ <section className="final-cta"><Eyebrow>INTELLIGENCE MEETS OPPORTUNITY</Eyebrow><h2>Welcome to the Next<br/>Generation of Commerce.</h2><p>A smarter way to discover. A better way to connect. A new way to grow.</p><div className="hero-actions"><Button variant="secondary" className="primary-final" onClick={()=>scrollTo('ai-shopping')}>Explore BarangViral<ArrowUpRight/></Button><Button variant="outline" className="secondary-final" onClick={()=>setModal({type:'coming'})}>Join the Coming Marketplace<ArrowRight/></Button></div></section>
+ </main>
+ <footer className="footer"><div className="container-wide"><div className="footer-top"><div><a href="#home" aria-label="BarangViral.Store home"><img src={logo.url} className="brand-image" alt="BarangViral.Store" width={1920} height={640} loading="lazy"/></a><p>AI E-Commerce Marketplace</p></div><nav className="footer-links" aria-label="Footer navigation"><a href="#about">About</a><a href="#ai-commerce">AI Commerce</a><a href="#buyers">For Buyers</a><a href="#sellers">For Sellers</a><a href="#suppliers">For Suppliers</a><a href="#partners">For Partners</a>{['Contact','Privacy','Terms'].map(t=><Button variant="link" key={t} onClick={()=>setModal({type:'info',title:t})}>{t}</Button>)}</nav></div><div className="footer-bottom"><span>© 2026 BarangViral.Store. All rights reserved.</span><span>UI/UX concept · Not a live marketplace</span><span>AI → Intelligence → Discovery → Matching → Commerce</span></div></div></footer>
+ <Dialog open={modal!==null} onOpenChange={open=>{if(!open)setModal(null)}}><DialogContent className="max-w-xl w-[calc(100%-32px)] rounded-lg"><DialogTitle>{modal?.type==='compare'?'Compare your smart finds':modal?.type==='insight'?selected?.name:modal?.type==='coming'?'The next generation is taking shape.':modal?.type==='audience'?`${modal.title?.replace('FOR ','')} · Coming marketplace`:modal?.title}</DialogTitle><DialogDescription>{modal?.type==='compare'?'Illustrative product comparison · Concept/demo data':modal?.type==='insight'?'Viral Radar AI · Illustrative intelligence, not live market analysis':modal?.type==='coming'?'BarangViral.Store is a UI/UX concept. Marketplace registration is not open yet.':modal?.type==='audience'?'A preview of the intelligence tools planned for the future marketplace.':'BarangViral.Store · Marketplace concept'}</DialogDescription>
+ {modal?.type==='compare'&&<><div className="overflow-x-auto"><table className="comparison-table"><thead><tr><th>Product</th><th>Demo price</th><th>Best for</th></tr></thead><tbody>{products.map(p=><tr key={p.name}><td>{p.name}</td><td>RM{p.price}</td><td>{p.reason}</td></tr>)}</tbody></table></div><p className="dialog-note">Choose the lamp for atmosphere, the fan for portability, or the organizer for storage. All three sample options are individually under RM100. No purchases are available in this concept.</p></>}
+ {modal?.type==='insight'&&selected&&<><div className="metrics py-4"><div className="metric"><span>Opportunity Score</span><strong>{selected.opportunity}/100</strong></div><div className="metric"><span>Competition</span><strong>{selected.competition}</strong></div><div className="metric"><span>Demand</span><strong>{selected.demand}</strong></div><div className="metric"><span>Viral Score</span><strong>{selected.viral}/100</strong></div></div><div className="recommendation"><strong><Sparkles size={12}/>AI RECOMMENDATION</strong>{selected.recommendation}</div><p className="dialog-note">These scores demonstrate how future product intelligence could appear. They are not sourced from real demand, sales, or market activity.</p><Button variant="commerce" onClick={()=>{setModal(null);scrollTo('ai-shopping')}}>Explore shopping concept<ArrowRight/></Button></>}
+ {modal?.type==='coming'&&<><p className="dialog-note">Explore the shopping assistant, product intelligence, and connected commerce journey today. Accounts, seller onboarding, and transactions will come in a future phase. No personal information is collected by this prototype.</p><Button variant="commerce" onClick={()=>{setModal(null);scrollTo('discover')}}>Explore the vision<ArrowRight/></Button></>}
+ {modal?.type==='audience'&&<><ul className="space-y-3 my-3">{audiences.find(a=>a.label===modal.title)?.features.map(f=><li key={f} className="flex items-center gap-2 text-sm"><Check size={14} className="text-primary"/>{f}</li>)}</ul><p className="dialog-note">These capabilities are planned concepts, not active services. Explore Viral Radar to see an illustrative intelligence experience.</p><Button variant="commerce" onClick={()=>{setModal(null);scrollTo('viral-radar')}}>Explore Viral Radar<ArrowRight/></Button></>}
+ {modal?.type==='info'&&<p className="dialog-note">{modal.title==='Contact'?'Official contact details will be added when confirmed by the BarangViral.Store team. No contact form submissions are collected in this concept.':modal.title==='Privacy'?'This prototype does not offer accounts or collect shopping requests on a server. The assistant interactions stay in this page and reset on reload. A complete privacy policy will be provided before the marketplace launches.':'This is a design demonstration, not an operational marketplace. Sample products, prices, and scores are illustrative only. No purchases or registrations are available. Marketplace terms will be provided before launch.'}</p>}
+ </DialogContent></Dialog>
+ </>
 }
