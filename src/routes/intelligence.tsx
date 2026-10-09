@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { useEffect, useState } from 'react';
-import { ArrowLeft, RefreshCw, Search, Youtube, TrendingUp, TrendingDown, Minus, ExternalLink, Radar, Clock3, Activity } from 'lucide-react';
+import { ArrowLeft, RefreshCw, Search, Youtube, TrendingUp, TrendingDown, Minus, ExternalLink, Radar, Clock3, Activity, Flame, Newspaper } from 'lucide-react';
 
 export const Route = createFileRoute('/intelligence')({
   head: () => ({ meta: [
@@ -21,6 +21,7 @@ type SearchMovement = SearchRow & {
   previous_position?: number | null; position_change?: number | null; observation_count?: number;
   comparison_status?: string; latest_captured_at: string;
 };
+type TrendRow = { rank: number; title: string; approximate_traffic: string; published_at: string; search_url: string; related_news: { title: string; url: string; source: string }[] };
 type VideoRow = {
   video_id: string; product_id: string | null; video_title: string | null; channel_title: string | null;
   video_url: string | null; thumbnail_url: string | null; latest_view_count: number | null;
@@ -51,6 +52,8 @@ function formatNumber(value?: number | null) {
 function IntelligencePage() {
   const [searchRows, setSearchRows] = useState<SearchMovement[]>([]);
   const [videoRows, setVideoRows] = useState<VideoRow[]>([]);
+  const [trendRows, setTrendRows] = useState<TrendRow[]>([]);
+  const [trendError, setTrendError] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [updatedAt, setUpdatedAt] = useState<Date | null>(null);
@@ -70,6 +73,17 @@ function IntelligencePage() {
     } finally { setLoading(false); }
   }
   useEffect(() => { void refresh(); }, []);
+
+  async function refreshTrends() {
+    setTrendError('');
+    try {
+      const response = await fetch(SUPABASE_URL + '/functions/v1/malaysia-trends-radar', { headers: { apikey: SUPABASE_KEY } });
+      const payload = await response.json();
+      if (!response.ok || !payload?.ok) throw new Error(payload?.error || 'Malaysia trends are temporarily unavailable');
+      setTrendRows(Array.isArray(payload.items) ? payload.items : []);
+    } catch (e) { setTrendError(e instanceof Error ? e.message : 'Unable to load Google Trends'); }
+  }
+  useEffect(() => { void refreshTrends(); }, []);
 
   const movedUp = searchRows.filter(row => row.comparison_status === 'MOVED_UP').length;
   const videoComparisons = videoRows.filter(row => row.has_growth_comparison).length;
@@ -97,6 +111,14 @@ function IntelligencePage() {
         <div className="rounded-2xl border border-slate-200 bg-white p-5"><div className="flex items-center gap-2 text-sm text-slate-500"><TrendingUp size={16}/> Results moved up</div><p className="mt-3 text-3xl font-bold">{loading ? '—' : movedUp}</p><p className="mt-1 text-xs text-slate-500">From previous captured search positions</p></div>
         <div className="rounded-2xl border border-slate-200 bg-white p-5"><div className="flex items-center gap-2 text-sm text-slate-500"><Youtube size={16}/> Comparable videos</div><p className="mt-3 text-3xl font-bold">{loading ? '—' : videoComparisons}</p><p className="mt-1 text-xs text-slate-500">Videos with at least two snapshots · {timeAgo(latestVideo)}</p></div>
       </div>
+      <section className="mb-8 overflow-hidden rounded-2xl border border-slate-200 bg-white">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 px-5 py-4">
+          <div><h2 className="flex items-center gap-2 font-bold"><Flame size={18} className="text-orange-500"/> Malaysia Trend Radar</h2><p className="mt-1 text-xs text-slate-500">Google Trends trending searches · refreshed from the public RSS feed</p></div>
+          <div className="flex items-center gap-3"><a className="text-xs font-semibold text-orange-600 hover:underline" href="https://trends.google.com/trending?geo=MY" target="_blank" rel="noreferrer">Open Google Trends <ExternalLink size={11} className="inline"/></a><button onClick={() => void refreshTrends()} className="rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold hover:border-orange-300">Refresh trends</button></div>
+        </div>
+        {trendError ? <div className="p-5 text-sm text-amber-800">{trendError}. You can still open Google Trends Malaysia directly above.</div> : trendRows.length ? <div className="grid gap-0 md:grid-cols-2 xl:grid-cols-3">{trendRows.slice(0,12).map((trend) => <article key={trend.rank + '-' + trend.title} className="border-b border-slate-100 p-4 md:border-r"><div className="flex items-start gap-3"><span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-orange-50 text-xs font-bold text-orange-700">#{trend.rank}</span><div className="min-w-0 flex-1"><a href={trend.search_url || 'https://trends.google.com/trending?geo=MY'} target="_blank" rel="noreferrer" className="font-semibold leading-snug hover:text-orange-600">{trend.title} <ExternalLink size={11} className="inline"/></a>{trend.approximate_traffic && <p className="mt-1 text-xs text-slate-500">Approx. search interest: {trend.approximate_traffic}</p>}{trend.related_news?.length > 0 && <div className="mt-2 space-y-1">{trend.related_news.slice(0,2).map((news) => <a key={news.url || news.title} href={news.url || trend.search_url} target="_blank" rel="noreferrer" className="block line-clamp-1 text-xs text-slate-500 hover:text-orange-600"><Newspaper size={10} className="mr-1 inline"/> {news.title}{news.source ? ' · ' + news.source : ''}</a>)}</div>}</div></div></article>)}</div> : <div className="p-5 text-sm text-slate-500">Loading Malaysia trending searches…</div>}
+        <div className="border-t border-slate-100 bg-orange-50/60 px-5 py-3 text-xs text-slate-600">General trending topics can include news, sport and public events. Product relevance must be assessed separately; a trending topic is not automatically a product opportunity.</div>
+      </section>
       <div className="grid gap-6 lg:grid-cols-2">
         <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
           <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4"><div><h2 className="font-bold">Search Discovery</h2><p className="mt-1 text-xs text-slate-500">SerpApi Google Search · Malaysia query history</p></div><Search className="text-orange-500" size={19}/></div>
