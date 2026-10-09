@@ -145,6 +145,7 @@ function Index() {
  const [shoppingDataSource,setShoppingDataSource] = useState<'supabase'>('supabase');
  const [modal,setModal] = useState<{type:string;index?:number;title?:string}|null>(null);
  const [radarProducts,setRadarProducts] = useState<RadarProduct[]>([]);
+ const [radarOffset,setRadarOffset] = useState(0);
  const [radarLoading,setRadarLoading] = useState(true);
 
  function parseBudget(text:string) {
