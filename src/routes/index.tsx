@@ -172,6 +172,7 @@ function Index() {
   return text.toLocaleLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g,'').replace(/[^\p{L}\p{N}]+/gu,' ').trim();
  }
  const shoppingIntentGroups = [
+  {intent:'phones', query:/\b(phones?|smartphones?|mobile phones?|cellphones?|handphones?|telefon|telefon pintar|telefon bimbit|telefon mudah alih)\b/i, product:/\b(phones?|smartphones?|mobile phones?|cellphones?|handphones?|telefon|telefon pintar|telefon bimbit|telefon mudah alih|iphone|galaxy [a-z0-9]+|redmi note|redmi k[0-9]+|redmi [0-9]+)\b/i},
   {intent:'headphones', query:/\b(headphones?|earphones?|earbuds?|buds|headset|fon kepala|fon telinga|earfon)\b/i, product:/\b(headphones?|earphones?|earbuds?|buds|headset|fon kepala|fon telinga|earfon)\b/i},
   {intent:'speakers', query:/\b(speakers?|pembesar suara|loudspeakers?)\b/i, product:/\b(speakers?|pembesar suara|loudspeakers?)\b/i},
   {intent:'audio', query:/\b(audio|music|sound|muzik|bunyi)\b/i, product:/\b(headphones?|earphones?|earbuds?|buds|headset|speakers?|pembesar suara|loudspeakers?|audio|music|sound|muzik|bunyi)\b/i},
@@ -219,6 +220,7 @@ function Index() {
   const r:string[]=[];
   if(budget!==null && p.current_price!==null && p.current_price<=budget) r.push('within RM'+budget+' budget');
   if(/small|compact|space|room|home|kecil|kompak|ruang|rumah/i.test(text) && /tag|speaker|band|watch|bud|headphone/i.test(p.name.toLowerCase())) r.push('compact everyday use');
+  if(/phones?|smartphones?|mobile phones?|cellphones?|handphones?|telefon|telefon pintar|telefon bimbit|telefon mudah alih/i.test(text) && /phones?|smartphones?|mobile phones?|cellphones?|handphones?|telefon|iphone|galaxy [a-z0-9]+|redmi note|redmi k[0-9]+|redmi [0-9]+/i.test(p.name.toLowerCase())) r.push('matches your phone need');
   if(/headphones?|earphones?|earbuds?|buds|headset|fon kepala|fon telinga|earfon/i.test(text) && /headphones?|earphones?|earbuds?|buds|headset/i.test(p.name.toLowerCase())) r.push('matches your headphone need');
   if(/speakers?|pembesar suara|loudspeaker/i.test(text) && /speakers?|pembesar suara|loudspeaker/i.test(p.name.toLowerCase())) r.push('matches your speaker need');
   if(/\b(audio|music|sound|muzik|bunyi)\b/i.test(text) && /speaker|buds|headphone/i.test(p.name.toLowerCase())) r.push('matches your audio need');
