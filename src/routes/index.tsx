@@ -141,15 +141,15 @@ function Index() {
   return m ? Number(m[1]) : null;
  }
  const shoppingIntentGroups = [
-  {intent:'audio', query:/\b(headphones?|earphones?|earbuds?|buds|headset|audio|music|speaker|sound)\b/i, product:/\b(headphones?|earphones?|earbuds?|buds|headset|audio|music|speaker|sound)\b/i},
-  {intent:'footwear', query:/\b(shoes?|sneakers?|trainers?|sandals?|slippers?)\b/i, product:/\b(shoes?|sneakers?|trainers?|sandals?|slippers?)\b/i},
-  {intent:'clothing', query:/\b(clothes?|shirts?|t-?shirts?|pants|trousers|jeans|dresses?|jackets?)\b/i, product:/\b(clothes?|shirts?|t-?shirts?|pants|trousers|jeans|dresses?|jackets?)\b/i},
-  {intent:'beauty', query:/\b(makeup|mascara|lipstick|skincare|beauty|cosmetics?)\b/i, product:/\b(makeup|mascara|lipstick|skincare|beauty|cosmetics?)\b/i},
-  {intent:'kitchen', query:/\b(kitchen|cooking|cookware|utensils?|oil|pan|pots?)\b/i, product:/\b(kitchen|cooking|cookware|utensils?|oil|pan|pots?)\b/i},
-  {intent:'fitness', query:/\b(fitness|health|smartwatch|watch|fitness band|step counter)\b/i, product:/\b(fitness|health|smartwatch|watch|band|step counter)\b/i},
-  {intent:'computers', query:/\b(laptop|computer|keyboard|mouse|monitor)\b/i, product:/\b(laptop|computer|keyboard|mouse|monitor)\b/i},
+  {intent:'audio', query:/\b(headphones?|earphones?|earbuds?|buds|headset|audio|music|speaker|sound|fon kepala|fon telinga|earfon)\b/i, product:/\b(headphones?|earphones?|earbuds?|buds|headset|audio|music|speaker|sound|fon kepala|fon telinga|earfon)\b/i},
+  {intent:'footwear', query:/\b(shoes?|sneakers?|trainers?|sandals?|slippers?|kasut|selipar)\b/i, product:/\b(shoes?|sneakers?|trainers?|sandals?|slippers?|kasut|selipar)\b/i},
+  {intent:'clothing', query:/\b(clothes?|shirts?|t-?shirts?|pants|trousers|jeans|dresses?|jackets?|baju|seluar|pakaian)\b/i, product:/\b(clothes?|shirts?|t-?shirts?|pants|trousers|jeans|dresses?|jackets?|baju|seluar|pakaian)\b/i},
+  {intent:'beauty', query:/\b(makeup|mascara|lipstick|skincare|beauty|cosmetics?|solekan|gincu|penjagaan kulit)\b/i, product:/\b(makeup|mascara|lipstick|skincare|beauty|cosmetics?|solekan|gincu|penjagaan kulit)\b/i},
+  {intent:'kitchen', query:/\b(kitchen|cooking|cookware|utensils?|oil|pan|pots?|dapur|memasak|minyak|kuali)\b/i, product:/\b(kitchen|cooking|cookware|utensils?|oil|pan|pots?|dapur|memasak|minyak|kuali)\b/i},
+  {intent:'fitness', query:/\b(fitness|health|smartwatch|watch|fitness band|step counter|kecergasan|kesihatan|jam pintar)\b/i, product:/\b(fitness|health|smartwatch|watch|band|step counter|kecergasan|kesihatan|jam pintar)\b/i},
+  {intent:'computers', query:/\b(laptop|computer|keyboard|mouse|monitor|komputer|papan kekunci|tetikus)\b/i, product:/\b(laptop|computer|keyboard|mouse|monitor|komputer|papan kekunci|tetikus)\b/i},
   {intent:'tablets', query:/\b(tablet|ipad|e-?reader)\b/i, product:/\b(tablet|ipad|e-?reader|\bpad\b)/i},
-  {intent:'television', query:/\b(tv|television)\b/i, product:/\b(tv|television)\b/i},
+  {intent:'television', query:/\b(tv|television|televisyen)\b/i, product:/\b(tv|television|televisyen)\b/i},
  ];
  function getShoppingIntent(text:string) {
   return shoppingIntentGroups.find(group=>group.query.test(text)) ?? null;
