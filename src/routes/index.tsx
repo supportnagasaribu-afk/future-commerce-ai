@@ -172,7 +172,9 @@ function Index() {
   return text.toLocaleLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g,'').replace(/[^\p{L}\p{N}]+/gu,' ').trim();
  }
  const shoppingIntentGroups = [
-  {intent:'audio', query:/\b(headphones?|earphones?|earbuds?|buds|headset|audio|music|speaker|sound|pembesar suara|fon kepala|fon telinga|earfon|muzik|bunyi)\b/i, product:/\b(headphones?|earphones?|earbuds?|buds|headset|audio|music|speaker|sound|pembesar suara|fon kepala|fon telinga|earfon|muzik|bunyi)\b/i},
+  {intent:'headphones', query:/\b(headphones?|earphones?|earbuds?|buds|headset|fon kepala|fon telinga|earfon)\b/i, product:/\b(headphones?|earphones?|earbuds?|buds|headset|fon kepala|fon telinga|earfon)\b/i},
+  {intent:'speakers', query:/\b(speakers?|pembesar suara|loudspeakers?)\b/i, product:/\b(speakers?|pembesar suara|loudspeakers?)\b/i},
+  {intent:'audio', query:/\b(audio|music|sound|muzik|bunyi)\b/i, product:/\b(headphones?|earphones?|earbuds?|buds|headset|speakers?|pembesar suara|loudspeakers?|audio|music|sound|muzik|bunyi)\b/i},
   {intent:'footwear', query:/\b(shoes?|sneakers?|trainers?|sandals?|slippers?|kasut|selipar)\b/i, product:/\b(shoes?|sneakers?|trainers?|sandals?|slippers?|kasut|selipar)\b/i},
   {intent:'clothing', query:/\b(clothes?|shirts?|t-?shirts?|pants|trousers|jeans|dresses?|jackets?|baju|seluar|pakaian)\b/i, product:/\b(clothes?|shirts?|t-?shirts?|pants|trousers|jeans|dresses?|jackets?|baju|seluar|pakaian)\b/i},
   {intent:'beauty', query:/\b(makeup|mascara|lipstick|skincare|beauty|cosmetics?|solekan|gincu|penjagaan kulit)\b/i, product:/\b(makeup|mascara|lipstick|skincare|beauty|cosmetics?|solekan|gincu|penjagaan kulit)\b/i},
@@ -203,7 +205,9 @@ function Index() {
   const intent=getShoppingIntent(text);
   if(intent && isRelevantShoppingProduct(p,text)) score+=50;
   if(/small|compact|space|room|home|house|desk|kecil|kompak|ruang|rumah|meja/i.test(q) && /tag|speaker|band|watch|bud|headphone|essential/i.test(hay)) score+=12;
-  if(/audio|music|speaker|sound|muzik|bunyi|pembesar suara|fon telinga/i.test(q) && /speaker|buds|headphone/i.test(hay)) score+=30;
+  if(/headphones?|earphones?|earbuds?|buds|headset|fon kepala|fon telinga|earfon/i.test(q) && /headphones?|earphones?|earbuds?|buds|headset/i.test(hay)) score+=30;
+  if(/speakers?|pembesar suara|loudspeaker/i.test(q) && /speakers?|pembesar suara|loudspeaker/i.test(hay)) score+=30;
+  if(/\b(audio|music|sound|muzik|bunyi)\b/i.test(q) && /speaker|buds|headphone/i.test(hay)) score+=20;
   if(/fitness|health|watch|band|kecergasan|kesihatan|lari|langkah|jam pintar/i.test(q) && /band|watch/i.test(hay)) score+=30;
   if(/tablet|ipad|screen|study/i.test(q) && /pad|tablet/i.test(hay)) score+=30;
   if(/tv|television/i.test(q) && /tv|television/i.test(hay)) score+=30;
@@ -215,7 +219,9 @@ function Index() {
   const r:string[]=[];
   if(budget!==null && p.current_price!==null && p.current_price<=budget) r.push('within RM'+budget+' budget');
   if(/small|compact|space|room|home|kecil|kompak|ruang|rumah/i.test(text) && /tag|speaker|band|watch|bud|headphone/i.test(p.name.toLowerCase())) r.push('compact everyday use');
-  if(/audio|music|sound|muzik|bunyi|pembesar suara|fon telinga/i.test(text) && /speaker|buds|headphone/i.test(p.name.toLowerCase())) r.push('matches your audio need');
+  if(/headphones?|earphones?|earbuds?|buds|headset|fon kepala|fon telinga|earfon/i.test(text) && /headphones?|earphones?|earbuds?|buds|headset/i.test(p.name.toLowerCase())) r.push('matches your headphone need');
+  if(/speakers?|pembesar suara|loudspeaker/i.test(text) && /speakers?|pembesar suara|loudspeaker/i.test(p.name.toLowerCase())) r.push('matches your speaker need');
+  if(/\b(audio|music|sound|muzik|bunyi)\b/i.test(text) && /speaker|buds|headphone/i.test(p.name.toLowerCase())) r.push('matches your audio need');
   if(/fitness|health|watch|band|kecergasan|kesihatan|lari|langkah|jam pintar/i.test(text) && /band|watch/i.test(p.name.toLowerCase())) r.push('matches your fitness need');
   if(!r.length) r.push(p.category_name ? 'matches '+p.category_name.toLowerCase() : 'matches your request');
   return r.slice(0,2).join(' · ');
@@ -259,7 +265,8 @@ function Index() {
   const eligible=shoppingProducts.filter(p=>(budget===null||(p.current_price!==null&&p.current_price<=budget))&&isRelevantShoppingProduct(p,request));
   return [...eligible].sort((a,b)=>scoreShoppingProduct(b,request)-scoreShoppingProduct(a,request)).slice(0,3);
  },[shoppingProducts,request,budget]);
-  const recommendedProducts=aiRecommendations&&aiRecommendations.length>0?aiRecommendations:localRecommendations;
+  const relevantAiRecommendations=aiRecommendations?.filter(p=>isRelevantShoppingProduct(p,request))||[];
+ const recommendedProducts=relevantAiRecommendations.length>0?relevantAiRecommendations:localRecommendations;
  const selected=modal?.productId ? recommendedProducts.find(p=>p.id===modal.productId) : undefined;
  const selectedProductUrl=selected ? safeProductUrl(selected.product_url) : null;
  return <>
