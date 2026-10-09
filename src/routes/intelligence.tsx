@@ -89,6 +89,15 @@ function IntelligencePage() {
   const videoComparisons = videoRows.filter(row => row.has_growth_comparison).length;
   const latestSearch = searchRows[0]?.latest_captured_at;
   const latestVideo = videoRows[0]?.latest_captured_at;
+  const opportunityLeads = trendRows.map((trend) => {
+    const title = trend.title.toLowerCase();
+    const productMatch = /phone|smartphone|xiaomi|redmi|samsung|iphone|laptop|tablet|headphone|earbud|speaker|power bank|charger|smartwatch|camera|gaming|keyboard|mouse|air fryer|vacuum|beauty|skincare|serum|sunscreen|perfume|makeup|shampoo|baby|diaper|coffee|matcha|bag|shoe|sneaker|harga|review|unboxing|promosi|diskaun|telefon|kasut|beg/i.test(title);
+    const shoppingIntent = /price|harga|review|unboxing|best|buy|sale|discount|promo|promosi|diskaun|vs\\b|worth it|launch|launched|release/i.test(title);
+    const traffic = Number((trend.approximate_traffic || '').replace(/[^0-9]/g, '')) || 0;
+    const score = Math.min(100, (productMatch ? 40 : 0) + (shoppingIntent ? 20 : 0) + (traffic >= 100000 ? 25 : traffic >= 20000 ? 18 : traffic >= 5000 ? 12 : traffic > 0 ? 5 : 0) + (trend.related_news?.length ? 10 : 0));
+    return { ...trend, productMatch, score, status: score >= 60 ? 'RESEARCH PRIORITY' : score >= 30 ? 'CHECK PRODUCT FIT' : 'GENERAL TREND' };
+  }).sort((a, b) => b.score - a.score);
+  const productLeads = opportunityLeads.filter(item => item.productMatch);
 
   return <main className="min-h-screen bg-[#faf9f6] text-slate-900">
     <header className="border-b border-slate-200 bg-white">
@@ -118,6 +127,14 @@ function IntelligencePage() {
         </div>
         {trendError ? <div className="p-5 text-sm text-amber-800">{trendError}. You can still open Google Trends Malaysia directly above.</div> : trendRows.length ? <div className="grid gap-0 md:grid-cols-2 xl:grid-cols-3">{trendRows.slice(0,12).map((trend) => <article key={trend.rank + '-' + trend.title} className="border-b border-slate-100 p-4 md:border-r"><div className="flex items-start gap-3"><span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-orange-50 text-xs font-bold text-orange-700">#{trend.rank}</span><div className="min-w-0 flex-1"><a href={trend.search_url || 'https://trends.google.com/trending?geo=MY'} target="_blank" rel="noreferrer" className="font-semibold leading-snug hover:text-orange-600">{trend.title} <ExternalLink size={11} className="inline"/></a>{trend.approximate_traffic && <p className="mt-1 text-xs text-slate-500">Approx. search interest: {trend.approximate_traffic}</p>}{trend.related_news?.length > 0 && <div className="mt-2 space-y-1">{trend.related_news.slice(0,2).map((news) => <a key={news.url || news.title} href={news.url || trend.search_url} target="_blank" rel="noreferrer" className="block line-clamp-1 text-xs text-slate-500 hover:text-orange-600"><Newspaper size={10} className="mr-1 inline"/> {news.title}{news.source ? ' · ' + news.source : ''}</a>)}</div>}</div></div></article>)}</div> : <div className="p-5 text-sm text-slate-500">Loading Malaysia trending searches…</div>}
         <div className="border-t border-slate-100 bg-orange-50/60 px-5 py-3 text-xs text-slate-600">General trending topics can include news, sport and public events. Product relevance must be assessed separately; a trending topic is not automatically a product opportunity.</div>
+      </section>
+      <section className="mb-8 overflow-hidden rounded-2xl border border-slate-200 bg-white">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 px-5 py-4">
+          <div><h2 className="flex items-center gap-2 font-bold"><Activity size={18} className="text-orange-500"/> Product Opportunity Watchlist</h2><p className="mt-1 text-xs text-slate-500">A first-pass filter over current trends · heuristic score, not a sales forecast</p></div>
+          <span className="rounded-full bg-orange-50 px-3 py-1 text-xs font-semibold text-orange-700">{productLeads.length} product-related leads</span>
+        </div>
+        {productLeads.length ? <div className="divide-y divide-slate-100">{productLeads.slice(0,8).map((item) => <article key={item.rank + item.title} className="flex flex-wrap items-center justify-between gap-3 p-4"><div className="min-w-0 flex-1"><p className="mb-1 text-[10px] font-bold uppercase tracking-wide text-orange-600">{item.status}</p><a href={item.search_url || 'https://trends.google.com/trending?geo=MY'} target="_blank" rel="noreferrer" className="font-semibold hover:text-orange-600">{item.title} <ExternalLink size={11} className="inline"/></a><p className="mt-1 text-xs text-slate-500">{item.approximate_traffic ? 'Approx. search interest: ' + item.approximate_traffic + ' · ' : ''}Next: verify marketplace price, product availability and repeated growth.</p></div><div className="min-w-24 text-right"><p className="text-2xl font-bold">{item.score}</p><p className="text-[10px] text-slate-400">heuristic / 100</p></div></article>)}</div> : <div className="p-5"><p className="text-sm font-semibold text-slate-800">No product-specific leads detected in the current trending list.</p><p className="mt-1 text-sm text-slate-500">That is a useful result: current trends may be news or public events. Next, compare product-keyword search history and YouTube growth before selecting a product.</p></div>}
+        <div className="border-t border-slate-100 bg-orange-50/60 px-5 py-3 text-xs text-slate-600">Evidence standard: a trend match is only a lead. Prioritize candidates only after confirming shopping intent, local availability and sustained growth across multiple observations.</div>
       </section>
       <div className="grid gap-6 lg:grid-cols-2">
         <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
