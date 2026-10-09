@@ -1,4 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router';
+import { requestAiShopping, type AiShoppingInterpretation } from '@/lib/ai-shopping';
 import { useEffect, useState, useMemo, type FormEvent } from 'react';
 import { ArrowRight, ArrowUpRight, ArrowUp, Sparkles, BrainCircuit, ScanSearch, Network, ShoppingBag, Music2, Smartphone, Footprints, TrendingUp, Radar, Check, SlidersHorizontal, Menu, X, Play, Store, Package, Megaphone, ShieldCheck, Fingerprint, Layers, Database, RefreshCw, Box, ChartNoAxesCombined, GitCompareArrows, ChevronRight, CircleDot } from 'lucide-react';
 import { Button } from '@/components/ui/button';
