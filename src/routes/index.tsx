@@ -124,15 +124,6 @@ function Index() {
   return () => { cancelled = true; };
  }, []);
 
- useEffect(() => {
-  if (radarProducts.length <= 3) return;
-  const timer = window.setInterval(() => setRadarOffset(current => (current + 3) % radarProducts.length), 12000);
-  return () => window.clearInterval(timer);
- }, [radarProducts.length]);
- const displayedRadarProducts = radarProducts.length > 3
-  ? [...radarProducts.slice(radarOffset), ...radarProducts.slice(0, radarOffset)].slice(0, 3)
-  : radarProducts;
-
  const [mobileOpen,setMobileOpen] = useState(false);
  const [input,setInput] = useState('');
  const [request,setRequest] = useState('Find me the best products under RM100 for a small home.');
@@ -147,6 +138,16 @@ function Index() {
  const [radarProducts,setRadarProducts] = useState<RadarProduct[]>([]);
  const [radarOffset,setRadarOffset] = useState(0);
  const [radarLoading,setRadarLoading] = useState(true);
+
+ useEffect(() => {
+  if (radarProducts.length <= 3) return;
+  const timer = window.setInterval(() => setRadarOffset(current => (current + 3) % radarProducts.length), 12000);
+  return () => window.clearInterval(timer);
+ }, [radarProducts.length]);
+ const displayedRadarProducts = radarProducts.length > 3
+  ? [...radarProducts.slice(radarOffset), ...radarProducts.slice(0, radarOffset)].slice(0, 3)
+  : radarProducts;
+
 
  function parseBudget(text:string) {
   const m=text.match(/(?:under|below|less than|max(?:imum)?|budget(?: of)?)\s*RM?\s*(\d+(?:\.\d+)?)/i) || text.match(/RM\s*(\d+(?:\.\d+)?)/i);
