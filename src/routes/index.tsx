@@ -101,7 +101,7 @@ function Index() {
     if(!res.ok) throw new Error('Shopping product request failed');
     const data=await res.json();
     const mapped=Array.isArray(data)?data.map((p:any)=>({...p,category_name:null})):[]; 
-    if(!cancelled) setShoppingProducts(mapped);
+    if(!cancelled) { setShoppingProducts(mapped); setShoppingDataSource('supabase'); }
    } catch { if(!cancelled) setShoppingProducts([]); }
    finally { if(!cancelled) setShoppingLoading(false); }
   }
@@ -131,6 +131,7 @@ function Index() {
  const [submitted,setSubmitted] = useState(false);
  const [shoppingProducts,setShoppingProducts] = useState<ShoppingProduct[]>([]);
  const [shoppingLoading,setShoppingLoading] = useState(true);
+ const [shoppingDataSource,setShoppingDataSource] = useState<'supabase'|'dummyjson'>('supabase');
  const [modal,setModal] = useState<{type:string;index?:number;title?:string}|null>(null);
  const [radarProducts,setRadarProducts] = useState<RadarProduct[]>([]);
  const [radarLoading,setRadarLoading] = useState(true);
@@ -164,6 +165,38 @@ function Index() {
   if(!r.length) r.push(p.category_name ? 'matches '+p.category_name.toLowerCase() : 'matches your request');
   return r.slice(0,2).join(' · ');
  }
+ async function loadDummyJsonProducts() {
+  setShoppingLoading(true);
+  try {
+   const res=await fetch('https://dummyjson.com/products?limit=30&select=id,title,description,category,price,discountPercentage,rating,brand,thumbnail,images,stock');
+   if(!res.ok) throw new Error('DummyJSON request failed');
+   const payload=await res.json();
+   const mapped:ShoppingProduct[]=(Array.isArray(payload.products)?payload.products:[]).map((p:any)=>({
+    id:'dummyjson-'+p.id,name:p.title,brand:p.brand??null,image_url:p.thumbnail??p.images?.[0]??null,
+    current_price:typeof p.price==='number'?Number((p.price*4.5).toFixed(2)):null,
+    original_price:typeof p.price==='number'&&typeof p.discountPercentage==='number'?Number((p.price/(1-p.discountPercentage/100)*4.5).toFixed(2)):null,
+    discount_percent:typeof p.discountPercentage==='number'?p.discountPercentage:null,
+    rating:typeof p.rating==='number'?p.rating:null,review_count:0,sold_count:0,
+    description:p.description??null,category_name:p.category??null,source:'dummyjson_sample_api',
+    product_url:null,viral_score:0
+   }));
+   setShoppingProducts(mapped);
+   setShoppingDataSource('dummyjson');
+   setSubmitted(false);
+  } catch { setShoppingProducts([]); setShoppingDataSource('dummyjson'); }
+  finally { setShoppingLoading(false); }
+ }
+ async function loadProductionCatalogue() {
+  setShoppingLoading(true);
+  try {
+   const res=await fetch(SUPABASE_URL+'/rest/v1/products?select=id,name,brand,image_url,current_price,original_price,discount_percent,rating,review_count,sold_count,description,viral_score,source,product_url&order=viral_score.desc,created_at.desc&limit=50',{headers:{apikey:SUPABASE_KEY,Authorization:'Bearer '+SUPABASE_KEY}});
+   if(!res.ok) throw new Error('Shopping product request failed');
+   const data=await res.json();
+   setShoppingProducts(Array.isArray(data)?data.map((p:any)=>({...p,category_name:null})):[]);
+   setShoppingDataSource('supabase');
+  } catch { setShoppingProducts([]); }
+  finally { setShoppingLoading(false); }
+ }
  function submit(e:FormEvent) {e.preventDefault();if(!input.trim())return;setRequest(input.trim());setInput('');setSubmitted(true)}
  function scrollTo(id:string) {document.getElementById(id)?.scrollIntoView({behavior:'smooth'});setMobileOpen(false)}
  const budget=parseBudget(request);
@@ -186,11 +219,11 @@ function Index() {
  </div><div className="hero-footnote">INTELLIGENCE AT THE CORE. COMMERCE AT THE EDGE.</div></section>
  <AdSlot />
  <section className="journey" id="discover"><div className="container-wide"><div className="section-heading centered"><Eyebrow>ONE CONNECTED JOURNEY</Eyebrow><h2>From intent to opportunity. From opportunity to commerce.</h2><p>Five intelligent stages. One seamlessly connected ecosystem.</p></div><div className="journey-grid">{steps.map((s,i)=><article className="journey-stage" key={s.name}><div className="stage-icon"><s.icon size={20} strokeWidth={1.5}/></div>{i<4&&<div className="stage-line"><ChevronRight/></div>}<div className="stage-number">STEP 0{i+1}</div><h3>{s.name}</h3><h4>{s.title}</h4><p>{s.description}</p></article>)}</div></div></section>
- <section className="section assistant-section" id="ai-shopping"><div className="container-wide"><div className="section-topline"><div className="section-heading"><Eyebrow>YOUR INTELLIGENT SHOPPING COMPANION</Eyebrow><h2>Not just search. Understanding.</h2><p>A shopping experience that starts with what you need — not what you type.</p></div><span className="demo-tag"><CircleDot size={11}/>{shoppingLoading?'CONNECTING TO PRODUCT DATA':'LIVE PRODUCT DATA · V1'}</span></div>
- <div className="assistant-window"><div className="assistant-titlebar"><div className="assistant-name"><span className="ai-mark"><Sparkles size={16}/></span>BarangViral AI<span className="text-muted-foreground font-normal hidden sm:inline">/ Shopping assistant</span></div><span className="assistant-status"><span className="eyebrow-dot"/>{shoppingLoading?'CONNECTING':'LIVE MATCHING'}</span></div>
- <div className="assistant-body"><div className="chat-side"><div className="user-message">{request}</div><div className="ai-message"><span className="ai-mark shrink-0"><Sparkles size={15}/></span><div><strong>{submitted?'Here’s what matches your request.':'Try describing what you need.'}</strong><p>{shoppingLoading?'Loading the current BarangViral product catalogue…':shoppingProducts.length?'I matched your request against '+shoppingProducts.length+' products in our live catalogue. The ranking uses your wording, budget and product attributes — no paid AI API is required.':'Product data is temporarily unavailable. Please try again shortly.'}</p>{!shoppingLoading&&shoppingProducts.length>0&&<div className="intent-chips"><span><Check size={9} className="inline mr-1"/>{budget!==null?'Under RM'+budget:'Budget understood'}</span><span>Product matching</span><span>BarangViral catalogue</span></div>}</div></div><div className="assistant-tip"><BrainCircuit size={14} className="inline mr-2 text-primary"/>Rule-based intelligence first: understand intent, match products, rank options.</div>
+ <section className="section assistant-section" id="ai-shopping"><div className="container-wide"><div className="section-topline"><div className="section-heading"><Eyebrow>YOUR INTELLIGENT SHOPPING COMPANION</Eyebrow><h2>Not just search. Understanding.</h2><p>A shopping experience that starts with what you need — not what you type.</p></div><span className="demo-tag"><CircleDot size={11}/>{shoppingLoading?'CONNECTING TO PRODUCT DATA':shoppingDataSource==='dummyjson'?'SAMPLE API DATA · DUMMYJSON':'SUPABASE CATALOGUE · V1'}</span></div>
+ <div className="assistant-window"><div className="assistant-titlebar"><div className="assistant-name"><span className="ai-mark"><Sparkles size={16}/></span>BarangViral AI<span className="text-muted-foreground font-normal hidden sm:inline">/ Shopping assistant</span></div><span className="assistant-status"><span className="eyebrow-dot"/>{shoppingLoading?'CONNECTING':shoppingDataSource==='dummyjson'?'DEMO MATCHING':'CATALOGUE MATCHING'}</span></div>
+ <div className="assistant-body"><div className="chat-side"><div className="user-message">{request}</div><div className="ai-message"><span className="ai-mark shrink-0"><Sparkles size={15}/></span><div><strong>{submitted?'Here’s what matches your request.':'Try describing what you need.'}</strong><p>{shoppingLoading?'Loading the current BarangViral product catalogue…':shoppingProducts.length?'I matched your request against '+shoppingProducts.length+' '+(shoppingDataSource==='dummyjson'?'sample products from DummyJSON. Prices are converted approximately from USD to MYR for UI testing and are not verified Malaysian prices.':'products in the Supabase catalogue. The ranking uses your wording, budget and product attributes — no paid AI API is required.'):'Product data is temporarily unavailable. Please try again shortly.'}</p>{!shoppingLoading&&shoppingProducts.length>0&&<div className="intent-chips"><span><Check size={9} className="inline mr-1"/>{budget!==null?'Under RM'+budget:'Budget understood'}</span><span>Product matching</span><span>{shoppingDataSource==='dummyjson'?'DummyJSON sample':'BarangViral catalogue'}</span></div>}</div></div><div className="assistant-tip"><BrainCircuit size={14} className="inline mr-2 text-primary"/>Rule-based intelligence first: understand intent, match products, rank options.</div>
  <form className="chat-input" onSubmit={submit}><input aria-label="Ask the AI shopping assistant" value={input} onChange={e=>setInput(e.target.value)} placeholder="Tell me what you’re looking for…"/><Button variant="commerce" size="icon" aria-label="Send request" type="submit" disabled={!input.trim()||shoppingLoading}><ArrowUp/></Button></form></div>
- <div className="suggestions"><div className="suggestions-heading">MATCHED FOR YOU <span>{shoppingLoading?'Loading…':recommendedProducts.length+' recommendations'}</span></div>{shoppingLoading?[0,1,2].map(i=><div className="product-row" key={i}><div className="product-visual"/><div className="min-w-0"><h4>Finding products…</h4><p>Reading live catalogue data</p></div><span className="product-price">—</span></div>):recommendedProducts.map((p)=><div className="product-row" key={p.id}><ProductVisual product={p}/><div className="min-w-0"><h4>{p.name}</h4><p>{recommendationReason(p,request,budget)}</p><small><Check size={10}/>Matched from live catalogue</small></div><span className="product-price">{p.current_price!==null?'RM'+Number(p.current_price).toFixed(0):'—'}</span></div>)}{!shoppingLoading&&!recommendedProducts.length&&<div className="dialog-note">No matching products found yet. Try a broader request such as “products under RM100” or “something for fitness”.</div>}<div className="compare-action"><span>Powered by Supabase product data · No paid AI API</span>{recommendedProducts.length>1&&<Button variant="outline" size="sm" onClick={()=>setModal({type:'compare'})}><GitCompareArrows/>Compare options</Button>}</div></div></div></div>
+ <div className="suggestions"><div className="suggestions-heading">MATCHED FOR YOU <span>{shoppingLoading?'Loading…':recommendedProducts.length+' recommendations'}</span></div>{shoppingLoading?[0,1,2].map(i=><div className="product-row" key={i}><div className="product-visual"/><div className="min-w-0"><h4>Finding products…</h4><p>Reading live catalogue data</p></div><span className="product-price">—</span></div>):recommendedProducts.map((p)=><div className="product-row" key={p.id}><ProductVisual product={p}/><div className="min-w-0"><h4>{p.name}</h4><p>{recommendationReason(p,request,budget)}</p><small><Check size={10}/>Matched from live catalogue</small></div><span className="product-price">{p.current_price!==null?'RM'+Number(p.current_price).toFixed(0):'—'}</span></div>)}{!shoppingLoading&&!recommendedProducts.length&&<div className="dialog-note">No matching products found yet. Try a broader request such as “products under RM100” or “something for fitness”.</div>}<div className="compare-action"><span>{shoppingDataSource==='dummyjson'?'DummyJSON sample data · Not verified Malaysian prices':'Powered by Supabase product data · No paid AI API'}</span><div className="flex flex-wrap gap-2"><Button variant="outline" size="sm" onClick={shoppingDataSource==='dummyjson'?loadProductionCatalogue:loadDummyJsonProducts} disabled={shoppingLoading}>{shoppingDataSource==='dummyjson'?'Return to production':'Try free sample API'}</Button>{recommendedProducts.length>1&&<Button variant="outline" size="sm" onClick={()=>setModal({type:'compare'})}><GitCompareArrows/>Compare options</Button>}</div></div></div></div></div>
  </div></section>
  <InPagePushSlot />
  <section className="sponsored-offers" aria-label="Sponsored offers">
