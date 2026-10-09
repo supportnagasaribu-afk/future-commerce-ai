@@ -14,18 +14,18 @@ const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://bzrhhuupcnfgx
 const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || 'sb_publishable_MzM7ufbE0ajl9uk4eowbtw_eJNpjofH';
 
 type SearchRow = {
-  id: number; query_text: string; result_title: string | null; result_url: string | null;
-  result_snippet: string | null; result_position: number | null; result_source: string | null; captured_at: string;
+  id?: number; query_text: string; result_title: string | null; result_url: string | null;
+  result_snippet: string | null; current_position: number | null; result_source: string | null; latest_captured_at: string;
 };
 type SearchMovement = SearchRow & {
   previous_position?: number | null; position_change?: number | null; observation_count?: number;
-  comparison_status?: string;
+  comparison_status?: string; latest_captured_at: string;
 };
 type VideoRow = {
   video_id: string; product_id: string | null; video_title: string | null; channel_title: string | null;
-  video_url: string | null; thumbnail_url: string | null; latest_views: number | null;
-  previous_views: number | null; views_gained: number | null; growth_percent: number | null;
-  hours_between_snapshots: number | null; views_per_hour: number | null; captured_at?: string;
+  video_url: string | null; thumbnail_url: string | null; latest_view_count: number | null;
+  previous_view_count: number | null; views_gained: number | null; view_growth_percent: number | null;
+  hours_between_snapshots: number | null; views_per_hour: number | null; latest_captured_at?: string;
   has_growth_comparison?: boolean;
 };
 
@@ -59,7 +59,7 @@ function IntelligencePage() {
     setLoading(true); setError('');
     try {
       const [search, videos] = await Promise.all([
-        getRows<SearchMovement>('serpapi_search_history_comparison?select=*&order=captured_at.desc&limit=30'),
+        getRows<SearchMovement>('serpapi_search_history_comparison?select=*&order=latest_captured_at.desc&limit=30'),
         getRows<VideoRow>('youtube_video_growth_v1?select=*&order=views_per_hour.desc.nullslast&limit=20'),
       ]);
       setSearchRows(search);
@@ -73,8 +73,8 @@ function IntelligencePage() {
 
   const movedUp = searchRows.filter(row => row.comparison_status === 'MOVED_UP').length;
   const videoComparisons = videoRows.filter(row => row.has_growth_comparison).length;
-  const latestSearch = searchRows[0]?.captured_at;
-  const latestVideo = videoRows[0]?.captured_at;
+  const latestSearch = searchRows[0]?.latest_captured_at;
+  const latestVideo = videoRows[0]?.latest_captured_at;
 
   return <main className="min-h-screen bg-[#faf9f6] text-slate-900">
     <header className="border-b border-slate-200 bg-white">
@@ -101,15 +101,15 @@ function IntelligencePage() {
         <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
           <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4"><div><h2 className="font-bold">Search Discovery</h2><p className="mt-1 text-xs text-slate-500">SerpApi Google Search · Malaysia query history</p></div><Search className="text-orange-500" size={19}/></div>
           {loading ? <div className="p-6 text-sm text-slate-500">Loading search history…</div> : searchRows.length ? <div className="divide-y divide-slate-100">{searchRows.slice(0,12).map((row,i)=><article key={row.id ?? row.result_url ?? i} className="p-4">
-            <div className="flex items-start justify-between gap-3"><div className="min-w-0"><p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-orange-600">{row.query_text || 'Search observation'}</p><a className="font-semibold leading-snug hover:text-orange-600" href={row.result_url || '#'} target="_blank" rel="noreferrer">{row.result_title || row.result_url || 'Untitled result'} <ExternalLink size={12} className="inline"/></a><p className="mt-1 line-clamp-2 text-xs text-slate-500">{row.result_snippet}</p></div><div className="shrink-0 text-right"><span className="rounded-md bg-slate-100 px-2 py-1 text-xs font-semibold">#{row.result_position ?? '—'}</span><p className="mt-2 flex items-center justify-end gap-1 text-[11px] text-slate-500">{row.comparison_status === 'MOVED_UP' ? <TrendingUp size={12} className="text-emerald-600"/> : row.comparison_status === 'MOVED_DOWN' ? <TrendingDown size={12} className="text-red-500"/> : <Minus size={12}/>} {row.comparison_status?.replaceAll('_',' ') || 'FIRST OBSERVATION'}</p></div></div>
-            <p className="mt-2 text-[10px] text-slate-400">{timeAgo(row.captured_at)}{row.observation_count ? ' · '+row.observation_count+' observations' : ''}</p>
+            <div className="flex items-start justify-between gap-3"><div className="min-w-0"><p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-orange-600">{row.query_text || 'Search observation'}</p><a className="font-semibold leading-snug hover:text-orange-600" href={row.result_url || '#'} target="_blank" rel="noreferrer">{row.result_title || row.result_url || 'Untitled result'} <ExternalLink size={12} className="inline"/></a><p className="mt-1 line-clamp-2 text-xs text-slate-500">{row.result_snippet}</p></div><div className="shrink-0 text-right"><span className="rounded-md bg-slate-100 px-2 py-1 text-xs font-semibold">#{row.current_position ?? '—'}</span><p className="mt-2 flex items-center justify-end gap-1 text-[11px] text-slate-500">{row.comparison_status === 'MOVED_UP' ? <TrendingUp size={12} className="text-emerald-600"/> : row.comparison_status === 'MOVED_DOWN' ? <TrendingDown size={12} className="text-red-500"/> : <Minus size={12}/>} {row.comparison_status?.replaceAll('_',' ') || 'FIRST OBSERVATION'}</p></div></div>
+            <p className="mt-2 text-[10px] text-slate-400">{timeAgo(row.latest_captured_at)}{row.observation_count ? ' · '+row.observation_count+' observations' : ''}</p>
           </article>)}</div> : <div className="p-6 text-sm text-slate-500">No search history available yet.</div>}
         </section>
         <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
           <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4"><div><h2 className="font-bold">Video Growth Radar</h2><p className="mt-1 text-xs text-slate-500">YouTube view snapshots · growth only when comparable</p></div><Youtube className="text-red-500" size={19}/></div>
           {loading ? <div className="p-6 text-sm text-slate-500">Loading video snapshots…</div> : videoRows.length ? <div className="divide-y divide-slate-100">{videoRows.slice(0,12).map((video,i)=><article key={video.video_id ?? i} className="flex gap-3 p-4">
             {video.thumbnail_url ? <img src={video.thumbnail_url} alt="" loading="lazy" className="h-20 w-28 shrink-0 rounded-lg bg-slate-100 object-cover"/> : <div className="flex h-20 w-28 shrink-0 items-center justify-center rounded-lg bg-slate-100"><Youtube size={22} className="text-slate-400"/></div>}
-            <div className="min-w-0 flex-1"><a href={video.video_url || '#'} target="_blank" rel="noreferrer" className="line-clamp-2 text-sm font-semibold hover:text-orange-600">{video.video_title || 'Untitled video'} <ExternalLink size={11} className="inline"/></a><p className="mt-1 truncate text-xs text-slate-500">{video.channel_title || 'Unknown channel'}</p><div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs"><span><strong>{formatNumber(video.latest_views)}</strong> views</span><span className={(video.views_gained ?? 0) > 0 ? 'font-semibold text-emerald-700' : 'text-slate-500'}><Activity size={11} className="mr-1 inline"/>{video.views_gained == null ? 'Awaiting second snapshot' : '+'+formatNumber(video.views_gained)+' views'}</span>{video.views_per_hour != null && <span>{formatNumber(video.views_per_hour)}/hr</span>}</div><p className="mt-1 text-[10px] text-slate-400">{video.hours_between_snapshots ? 'Compared over '+Number(video.hours_between_snapshots).toFixed(1)+' hours' : 'First observation — collect another snapshot to measure growth'}</p></div>
+            <div className="min-w-0 flex-1"><a href={video.video_url || '#'} target="_blank" rel="noreferrer" className="line-clamp-2 text-sm font-semibold hover:text-orange-600">{video.video_title || 'Untitled video'} <ExternalLink size={11} className="inline"/></a><p className="mt-1 truncate text-xs text-slate-500">{video.channel_title || 'Unknown channel'}</p><div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs"><span><strong>{formatNumber(video.latest_view_count)}</strong> views</span><span className={(video.views_gained ?? 0) > 0 ? 'font-semibold text-emerald-700' : 'text-slate-500'}><Activity size={11} className="mr-1 inline"/>{video.views_gained == null ? 'Awaiting second snapshot' : '+'+formatNumber(video.views_gained)+' views'}</span>{video.views_per_hour != null && <span>{formatNumber(video.views_per_hour)}/hr</span>}</div><p className="mt-1 text-[10px] text-slate-400">{video.hours_between_snapshots ? 'Compared over '+Number(video.hours_between_snapshots).toFixed(1)+' hours' : 'First observation — collect another snapshot to measure growth'}</p></div>
           </article>)}</div> : <div className="p-6 text-sm text-slate-500">No video observations available yet.</div>}
         </section>
       </div>
