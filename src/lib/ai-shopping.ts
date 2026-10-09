@@ -1,5 +1,3 @@
-import type { FormEvent } from 'react';
-
 export type AiShoppingInterpretation = {
   category: string;
   keywords: string[];
