@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { useEffect, useState } from 'react';
-import { ArrowLeft, RefreshCw, Search, Youtube, TrendingUp, TrendingDown, Minus, ExternalLink, Radar, Clock3, Activity, Flame, Newspaper } from 'lucide-react';
+import { ArrowLeft, RefreshCw, Search, Youtube, TrendingUp, TrendingDown, Minus, ExternalLink, Radar, Clock3, Activity, Flame, Newspaper, Smartphone, Sparkles, Shirt, House, Car, Baby, PawPrint, Coffee } from 'lucide-react';
 
 export const Route = createFileRoute('/intelligence')({
   head: () => ({ meta: [
@@ -135,6 +135,23 @@ function IntelligencePage() {
         </div>
         {productLeads.length ? <div className="divide-y divide-slate-100">{productLeads.slice(0,8).map((item) => <article key={item.rank + item.title} className="flex flex-wrap items-center justify-between gap-3 p-4"><div className="min-w-0 flex-1"><p className="mb-1 text-[10px] font-bold uppercase tracking-wide text-orange-600">{item.status}</p><a href={item.search_url || 'https://trends.google.com/trending?geo=MY'} target="_blank" rel="noreferrer" className="font-semibold hover:text-orange-600">{item.title} <ExternalLink size={11} className="inline"/></a><p className="mt-1 text-xs text-slate-500">{item.approximate_traffic ? 'Approx. search interest: ' + item.approximate_traffic + ' · ' : ''}Next: verify marketplace price, product availability and repeated growth.</p></div><div className="min-w-24 text-right"><p className="text-2xl font-bold">{item.score}</p><p className="text-[10px] text-slate-400">heuristic / 100</p></div></article>)}</div> : <div className="p-5"><p className="text-sm font-semibold text-slate-800">No product-specific leads detected in the current trending list.</p><p className="mt-1 text-sm text-slate-500">That is a useful result: current trends may be news or public events. Next, compare product-keyword search history and YouTube growth before selecting a product.</p></div>}
         <div className="border-t border-slate-100 bg-orange-50/60 px-5 py-3 text-xs text-slate-600">Evidence standard: a trend match is only a lead. Prioritize candidates only after confirming shopping intent, local availability and sustained growth across multiple observations.</div>
+      </section>
+      <section className="mb-8 overflow-hidden rounded-2xl border border-slate-200 bg-white">
+        <div className="border-b border-slate-100 px-5 py-4"><h2 className="flex items-center gap-2 font-bold"><Radar size={18} className="text-orange-500"/> Malaysia Product Research Queue</h2><p className="mt-1 text-xs text-slate-500">Category coverage plan — research candidates, not confirmed bestsellers</p></div>
+        <div className="grid gap-3 p-4 sm:grid-cols-2 lg:grid-cols-3">
+          {[
+            {name:'Electronics & accessories',icon:Smartphone,queries:'smartphone price, earbuds, power bank, smartwatch'},
+            {name:'Beauty & personal care',icon:Sparkles,queries:'sunscreen, skincare serum, perfume, hair care'},
+            {name:'Fashion & footwear',icon:Shirt,queries:'running shoes, modest fashion, bags, sale trends'},
+            {name:'Home & kitchen',icon:House,queries:'air fryer, robot vacuum, water filter, coffee machine'},
+            {name:'Automotive',icon:Car,queries:'dashcam, phone holder, car accessories'},
+            {name:'Baby & family',icon:Baby,queries:'stroller, diapers, baby essentials'},
+            {name:'Pet supplies',icon:PawPrint,queries:'automatic feeder, pet grooming, pet travel'},
+            {name:'Kitchen & lifestyle',icon:Coffee,queries:'portable blender, water bottle, lunch box'},
+            {name:'Cross-category deals',icon:Activity,queries:'Malaysia online deals, price drops, seasonal promotions'}
+          ].map((category)=>{const Icon=category.icon;return <article key={category.name} className="rounded-xl border border-slate-200 p-4"><div className="flex items-center gap-2"><Icon size={17} className="text-orange-500"/><h3 className="text-sm font-semibold">{category.name}</h3></div><p className="mt-2 text-xs leading-relaxed text-slate-500">Queries to investigate: {category.queries}.</p><a className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-orange-600 hover:underline" href={'https://www.google.com/search?q='+encodeURIComponent(category.queries+' Malaysia price review')} target="_blank" rel="noreferrer">Research these keywords <ExternalLink size={11}/></a></article>})}
+        </div>
+        <div className="border-t border-slate-100 bg-orange-50/60 px-5 py-3 text-xs text-slate-600">Next validation: collect comparable search and video observations per category, then check marketplace pricing and availability. Categories are not ranked until evidence exists.</div>
       </section>
       <div className="grid gap-6 lg:grid-cols-2">
         <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
