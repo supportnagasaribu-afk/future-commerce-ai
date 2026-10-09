@@ -31,9 +31,9 @@ type VideoRow = {
 
 async function getRows<T>(path: string): Promise<T[]> {
   const response = await fetch(SUPABASE_URL + '/rest/v1/' + path, {
-    headers: { apikey: SUPABASE_KEY, Authorization: 'Bearer ' + SUPABASE_KEY },
+    headers: { apikey: SUPABASE_KEY },
   });
-  if (!response.ok) throw new Error('Could not load intelligence data (' + response.status + ')');
+  if (!response.ok) { const details = await response.text().catch(() => ''); throw new Error('Could not load intelligence data (' + response.status + ')' + (details ? ': ' + details.slice(0, 180) : '')); }
   const json = await response.json();
   return Array.isArray(json) ? json : [];
 }
