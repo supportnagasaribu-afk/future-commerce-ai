@@ -126,19 +126,24 @@ Deno.serve(async (req: Request) => {
       const terms = [...new Set([parsed.category, ...(Array.isArray(parsed.keywords) ? parsed.keywords : [])]
         .filter((v) => typeof v === "string" && v.trim())
         .flatMap((v) => normalize(v).split(" ").filter((word) => word.length > 2)))];
+      const asksForPhones = /\b(phones?|smartphones?|mobile phones?|cellphones?|handphones?|telefon|telefon pintar|telefon bimbit|telefon mudah alih)\b/i.test(prompt);
       const asksForHeadphones = /\b(headphones?|earphones?|earbuds?|buds|headset|fon kepala|fon telinga|earfon)\b/i.test(prompt);
       const asksForSpeakers = /\b(speakers?|pembesar suara|loudspeakers?)\b/i.test(prompt);
-      const strictAudioType = asksForHeadphones !== asksForSpeakers
-        ? (asksForHeadphones ? "headphones" : "speakers")
-        : null;
+      const requestedProductTypes = [asksForPhones && "phones", asksForHeadphones && "headphones", asksForSpeakers && "speakers"].filter(Boolean);
+      const strictProductType = requestedProductTypes.length === 1 ? requestedProductTypes[0] : null;
       const eligible = (Array.isArray(products) ? products : [])
         .filter((p: any) => budget === null || (p.current_price !== null && Number(p.current_price) <= budget))
         .filter((p: any) => {
-          if (!strictAudioType) return true;
-          const productText = normalize([p.name, p.brand, p.description].filter(Boolean).join(" "));
-          return strictAudioType === "headphones"
-            ? /\b(headphones?|earphones?|earbuds?|buds|headset|fon kepala|fon telinga|earfon)\b/.test(productText)
-            : /\b(speakers?|pembesar suara|loudspeakers?)\b/.test(productText);
+          if (!strictProductType) return true;
+          // Use product identity fields only; descriptions often mention compatible devices and can misclassify accessories.
+          const productText = normalize([p.name, p.category_name].filter(Boolean).join(" "));
+          if (strictProductType === "phones") {
+            return /\b(phones?|smartphones?|mobile phones?|cellphones?|handphones?|telefon|iphone|galaxy [a-z0-9]+|redmi note|redmi k[0-9]+|redmi [0-9]+)\b/.test(productText);
+          }
+          if (strictProductType === "headphones") {
+            return /\b(headphones?|earphones?|earbuds?|buds|headset|fon kepala|fon telinga|earfon)\b/.test(productText);
+          }
+          return /\b(speakers?|pembesar suara|loudspeakers?)\b/.test(productText);
         });
       const valueIntent = /berbaloi|nilai|value|jimat|murah|bajet|budget/i.test(prompt);
       const scored = eligible.map((p: any) => {
