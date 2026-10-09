@@ -113,7 +113,7 @@ function Index() {
   let cancelled = false;
   async function loadRadar() {
    try {
-    const res = await fetch(SUPABASE_URL + '/rest/v1/viral_radar_v1?select=*&signal_source=eq.Xiaomi%20Official%20Store%20Commerce%20Proxy&order=viral_score.desc&limit=3', {headers:{apikey:SUPABASE_KEY,Authorization:'Bearer '+SUPABASE_KEY}});
+    const res = await fetch(SUPABASE_URL + '/rest/v1/viral_radar_v1?select=*&order=commerce_score.desc.nullslast,viral_score.desc&limit=9', {headers:{apikey:SUPABASE_KEY,Authorization:'Bearer '+SUPABASE_KEY}});
     if (!res.ok) throw new Error('Radar request failed');
     const data = await res.json();
     if (!cancelled) setRadarProducts(Array.isArray(data) ? data : []);
