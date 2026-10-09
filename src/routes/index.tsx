@@ -250,7 +250,7 @@ function Index() {
   if(!res.ok||!payload?.ok) throw new Error(payload?.error||'AI Shopping is temporarily unavailable. Please try again.');
   const recommendations=Array.isArray(payload.recommendations)?payload.recommendations.map((p:any)=>({...p,category_name:p.category_name??null})):[];
   setAiRecommendations(recommendations);
-  if(!recommendations.length) setAiError('No exact match was found. Showing the closest catalogue matches instead.');
+  if(!recommendations.length) setAiError('No matching products were found in the current catalogue. Try another category or budget.');
  } catch { setAiError('AI matching is temporarily unavailable. Showing the closest matches from the live catalogue.'); setAiRecommendations(null); }
  finally { setAiLoading(false); }
 }
@@ -268,7 +268,7 @@ function Index() {
   return [...eligible].sort((a,b)=>scoreShoppingProduct(b,request)-scoreShoppingProduct(a,request)).slice(0,3);
  },[shoppingProducts,request,budget]);
   const relevantAiRecommendations=aiRecommendations?.filter(p=>isRelevantShoppingProduct(p,request))||[];
- const recommendedProducts=relevantAiRecommendations.length>0?relevantAiRecommendations:localRecommendations;
+ const recommendedProducts=aiRecommendations!==null?relevantAiRecommendations:localRecommendations;
  const selected=modal?.productId ? recommendedProducts.find(p=>p.id===modal.productId) : undefined;
  const selectedProductUrl=selected ? safeProductUrl(selected.product_url) : null;
  return <>
