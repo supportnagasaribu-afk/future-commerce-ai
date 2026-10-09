@@ -32,6 +32,15 @@ type ShoppingProduct = {
  sold_count:number; description:string|null; category_name:string|null; source:string|null;
  product_url:string|null; viral_score:number;
 };
+function safeProductUrl(value:string|null) {
+ if(!value) return null;
+ try {
+  const url=new URL(value);
+  return url.protocol==='http:'||url.protocol==='https:' ? url.href : null;
+ } catch {
+  return null;
+ }
+}
 
 const audiences = [
  {id:'buyers',label:'FOR BUYERS',title:'Shop Smarter With AI',icon:ShoppingBag,features:['AI product recommendations','Product comparison','Personalized discovery','Smart search','AI shopping assistant'],cta:'Find your next discovery'},
@@ -103,7 +112,7 @@ function Index() {
   let cancelled=false;
   async function loadShoppingProducts() {
    try {
-    const res=await fetch(SUPABASE_URL+'/rest/v1/products?select=id,name,brand,image_url,current_price,original_price,discount_percent,rating,review_count,sold_count,description,viral_score,source,product_url&order=viral_score.desc,created_at.desc&limit=50',{headers:{apikey:SUPABASE_KEY,Authorization:'Bearer '+SUPABASE_KEY}});
+    const res=await fetch(SUPABASE_URL+'/rest/v1/products?select=id,name,brand,image_url,current_price,original_price,discount_percent,rating,review_count,sold_count,description,viral_score,source,product_url&order=viral_score.desc,created_at.desc&limit=100',{headers:{apikey:SUPABASE_KEY,Authorization:'Bearer '+SUPABASE_KEY}});
     if(!res.ok) throw new Error('Shopping product request failed');
     const data=await res.json();
     const mapped=Array.isArray(data)?data.map((p:any)=>({...p,category_name:null})):[]; 
@@ -140,7 +149,7 @@ function Index() {
  const [shoppingProducts,setShoppingProducts] = useState<ShoppingProduct[]>([]);
  const [shoppingLoading,setShoppingLoading] = useState(true);
  const [shoppingDataSource,setShoppingDataSource] = useState<'supabase'>('supabase');
- const [modal,setModal] = useState<{type:string;index?:number;title?:string}|null>(null);
+ const [modal,setModal] = useState<{type:string;productId?:string;title?:string}|null>(null);
  const [radarProducts,setRadarProducts] = useState<RadarProduct[]>([]);
  const [radarOffset,setRadarOffset] = useState(0);
  const [radarLoading,setRadarLoading] = useState(true);
@@ -156,16 +165,19 @@ function Index() {
 
 
  function parseBudget(text:string) {
-  const m=text.match(/(?:under|below|less than|max(?:imum)?|budget(?: of)?)\s*RM?\s*(\d+(?:\.\d+)?)/i) || text.match(/RM\s*(\d+(?:\.\d+)?)/i);
+  const m=text.match(/(?:under|below|less than|max(?:imum)?|budget(?: of)?|bawah|kurang daripada|kurang dari|tak lebih(?: daripada)?|tidak melebihi|hingga|sampai)\s*(?:RM\s*)?(\d+(?:\.\d+)?)/i) || text.match(/RM\s*(\d+(?:\.\d+)?)/i);
   return m ? Number(m[1]) : null;
  }
+ function normalizeShoppingText(text:string) {
+  return text.toLocaleLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g,'').replace(/[^\p{L}\p{N}]+/gu,' ').trim();
+ }
  const shoppingIntentGroups = [
-  {intent:'audio', query:/\b(headphones?|earphones?|earbuds?|buds|headset|audio|music|speaker|sound|fon kepala|fon telinga|earfon)\b/i, product:/\b(headphones?|earphones?|earbuds?|buds|headset|audio|music|speaker|sound|fon kepala|fon telinga|earfon)\b/i},
+  {intent:'audio', query:/\b(headphones?|earphones?|earbuds?|buds|headset|audio|music|speaker|sound|pembesar suara|fon kepala|fon telinga|earfon|muzik|bunyi)\b/i, product:/\b(headphones?|earphones?|earbuds?|buds|headset|audio|music|speaker|sound|pembesar suara|fon kepala|fon telinga|earfon|muzik|bunyi)\b/i},
   {intent:'footwear', query:/\b(shoes?|sneakers?|trainers?|sandals?|slippers?|kasut|selipar)\b/i, product:/\b(shoes?|sneakers?|trainers?|sandals?|slippers?|kasut|selipar)\b/i},
   {intent:'clothing', query:/\b(clothes?|shirts?|t-?shirts?|pants|trousers|jeans|dresses?|jackets?|baju|seluar|pakaian)\b/i, product:/\b(clothes?|shirts?|t-?shirts?|pants|trousers|jeans|dresses?|jackets?|baju|seluar|pakaian)\b/i},
   {intent:'beauty', query:/\b(makeup|mascara|lipstick|skincare|beauty|cosmetics?|solekan|gincu|penjagaan kulit)\b/i, product:/\b(makeup|mascara|lipstick|skincare|beauty|cosmetics?|solekan|gincu|penjagaan kulit)\b/i},
   {intent:'kitchen', query:/\b(kitchen|cooking|cookware|utensils?|oil|pan|pots?|dapur|memasak|minyak|kuali)\b/i, product:/\b(kitchen|cooking|cookware|utensils?|oil|pan|pots?|dapur|memasak|minyak|kuali)\b/i},
-  {intent:'fitness', query:/\b(fitness|health|smartwatch|watch|fitness band|step counter|kecergasan|kesihatan|jam pintar)\b/i, product:/\b(fitness|health|smartwatch|watch|band|step counter|kecergasan|kesihatan|jam pintar)\b/i},
+  {intent:'fitness', query:/\b(fitness|health|smartwatch|watch|fitness band|step counter|kecergasan|kesihatan|jam pintar|lari|langkah)\b/i, product:/\b(fitness|health|smartwatch|watch|band|step counter|kecergasan|kesihatan|jam pintar|lari|langkah)\b/i},
   {intent:'computers', query:/\b(laptop|computer|keyboard|mouse|monitor|komputer|papan kekunci|tetikus)\b/i, product:/\b(laptop|computer|keyboard|mouse|monitor|komputer|papan kekunci|tetikus)\b/i},
   {intent:'tablets', query:/\b(tablet|ipad|e-?reader)\b/i, product:/\b(tablet|ipad|e-?reader|\bpad\b)/i},
   {intent:'television', query:/\b(tv|television|televisyen)\b/i, product:/\b(tv|television|televisyen)\b/i},
@@ -190,9 +202,9 @@ function Index() {
   if(budget!==null && p.current_price!==null) score += p.current_price<=budget ? 35 : -45;
   const intent=getShoppingIntent(text);
   if(intent && isRelevantShoppingProduct(p,text)) score+=50;
-  if(/small|compact|space|room|home|house|desk/i.test(q) && /tag|speaker|band|watch|bud|headphone|essential/i.test(hay)) score+=12;
-  if(/audio|music|speaker|sound/i.test(q) && /speaker|buds|headphone/i.test(hay)) score+=30;
-  if(/fitness|health|watch|band/i.test(q) && /band|watch/i.test(hay)) score+=30;
+  if(/small|compact|space|room|home|house|desk|kecil|kompak|ruang|rumah|meja/i.test(q) && /tag|speaker|band|watch|bud|headphone|essential/i.test(hay)) score+=12;
+  if(/audio|music|speaker|sound|muzik|bunyi|pembesar suara|fon telinga/i.test(q) && /speaker|buds|headphone/i.test(hay)) score+=30;
+  if(/fitness|health|watch|band|kecergasan|kesihatan|lari|langkah|jam pintar/i.test(q) && /band|watch/i.test(hay)) score+=30;
   if(/tablet|ipad|screen|study/i.test(q) && /pad|tablet/i.test(hay)) score+=30;
   if(/tv|television/i.test(q) && /tv|television/i.test(hay)) score+=30;
   if(p.rating) score+=Math.min(10,p.rating*2);
@@ -202,19 +214,21 @@ function Index() {
  function recommendationReason(p:ShoppingProduct,text:string,budget:number|null) {
   const r:string[]=[];
   if(budget!==null && p.current_price!==null && p.current_price<=budget) r.push('within RM'+budget+' budget');
-  if(/small|compact|space|room|home/i.test(text) && /tag|speaker|band|watch|bud|headphone/i.test(p.name.toLowerCase())) r.push('compact everyday use');
-  if(/audio|music|sound/i.test(text) && /speaker|buds|headphone/i.test(p.name.toLowerCase())) r.push('matches your audio need');
-  if(/fitness|health|watch|band/i.test(text) && /band|watch/i.test(p.name.toLowerCase())) r.push('matches your fitness need');
+  if(/small|compact|space|room|home|kecil|kompak|ruang|rumah/i.test(text) && /tag|speaker|band|watch|bud|headphone/i.test(p.name.toLowerCase())) r.push('compact everyday use');
+  if(/audio|music|sound|muzik|bunyi|pembesar suara|fon telinga/i.test(text) && /speaker|buds|headphone/i.test(p.name.toLowerCase())) r.push('matches your audio need');
+  if(/fitness|health|watch|band|kecergasan|kesihatan|lari|langkah|jam pintar/i.test(text) && /band|watch/i.test(p.name.toLowerCase())) r.push('matches your fitness need');
   if(!r.length) r.push(p.category_name ? 'matches '+p.category_name.toLowerCase() : 'matches your request');
   return r.slice(0,2).join(' · ');
  }
  async function loadProductionCatalogue() {
   setShoppingLoading(true);
   try {
-   const res=await fetch(SUPABASE_URL+'/rest/v1/products?select=id,name,brand,image_url,current_price,original_price,discount_percent,rating,review_count,sold_count,description,viral_score,source,product_url&order=viral_score.desc,created_at.desc&limit=50',{headers:{apikey:SUPABASE_KEY,Authorization:'Bearer '+SUPABASE_KEY}});
+   const res=await fetch(SUPABASE_URL+'/rest/v1/products?select=id,name,brand,image_url,current_price,original_price,discount_percent,rating,review_count,sold_count,description,viral_score,source,product_url&order=viral_score.desc,created_at.desc&limit=100',{headers:{apikey:SUPABASE_KEY,Authorization:'Bearer '+SUPABASE_KEY}});
    if(!res.ok) throw new Error('Shopping product request failed');
    const data=await res.json();
    setShoppingProducts(Array.isArray(data)?data.map((p:any)=>({...p,category_name:null})):[]);
+   setAiRecommendations(null);
+   setAiError(null);
    setShoppingDataSource('supabase');
   } catch { setShoppingProducts([]); }
   finally { setShoppingLoading(false); }
@@ -228,14 +242,26 @@ function Index() {
   if(!res.ok||!payload?.ok) throw new Error(payload?.error||'AI Shopping is temporarily unavailable. Please try again.');
   const recommendations=Array.isArray(payload.recommendations)?payload.recommendations.map((p:any)=>({...p,category_name:p.category_name??null})):[];
   setAiRecommendations(recommendations);
- } catch(err) { setAiError(err instanceof Error?err.message:'Unable to reach AI Shopping.'); setAiRecommendations([]); }
+  if(!recommendations.length) setAiError('No exact match was found. Showing the closest catalogue matches instead.');
+ } catch { setAiError('AI matching is temporarily unavailable. Showing the closest matches from the live catalogue.'); setAiRecommendations(null); }
  finally { setAiLoading(false); }
 }
  function scrollTo(id:string) {document.getElementById(id)?.scrollIntoView({behavior:'smooth'});setMobileOpen(false)}
  const budget=parseBudget(request);
- const localRecommendations=useMemo(()=>{const eligible=shoppingProducts.filter(p=>(budget===null||(p.current_price!==null&&p.current_price<=budget))&&isRelevantShoppingProduct(p,request));return [...eligible].sort((a,b)=>scoreShoppingProduct(b,request)-scoreShoppingProduct(a,request)).slice(0,3)},[shoppingProducts,request,budget]);
-  const recommendedProducts=aiRecommendations!==null?aiRecommendations:localRecommendations;
- const selected=modal?.index!==undefined ? recommendedProducts[modal.index] : undefined;
+ const localRecommendations=useMemo(()=>{
+  const normalizedRequest=normalizeShoppingText(request);
+  const namedProducts=shoppingProducts.filter(p=>{
+   const normalizedName=normalizeShoppingText(p.name);
+   return normalizedName.length>=5 && normalizedRequest.includes(normalizedName) && (budget===null || (p.current_price!==null && p.current_price<=budget));
+  });
+  if(namedProducts.length) return namedProducts.slice(0,3);
+  if(/\b(compare|comparison|bandingkan|perbandingan|bezakan)\b/i.test(request)) return [];
+  const eligible=shoppingProducts.filter(p=>(budget===null||(p.current_price!==null&&p.current_price<=budget))&&isRelevantShoppingProduct(p,request));
+  return [...eligible].sort((a,b)=>scoreShoppingProduct(b,request)-scoreShoppingProduct(a,request)).slice(0,3);
+ },[shoppingProducts,request,budget]);
+  const recommendedProducts=aiRecommendations&&aiRecommendations.length>0?aiRecommendations:localRecommendations;
+ const selected=modal?.productId ? recommendedProducts.find(p=>p.id===modal.productId) : undefined;
+ const selectedProductUrl=selected ? safeProductUrl(selected.product_url) : null;
  return <>
  <header className="site-header" id="home"><div className="container-wide header-inner">
  <a href="#home" aria-label="BarangViral.Store home"><img className="brand-image" src={logoUrl} alt="BarangViral.Store" width={1920} height={640}/></a>
@@ -255,9 +281,9 @@ function Index() {
  <section className="journey" id="discover"><div className="container-wide"><div className="section-heading centered"><Eyebrow>ONE CONNECTED JOURNEY</Eyebrow><h2>From intent to opportunity. From opportunity to commerce.</h2><p>Five intelligent stages. One seamlessly connected ecosystem.</p></div><div className="journey-grid">{steps.map((s,i)=><article className="journey-stage" key={s.name}><div className="stage-icon"><s.icon size={20} strokeWidth={1.5}/></div>{i<4&&<div className="stage-line"><ChevronRight/></div>}<div className="stage-number">STEP 0{i+1}</div><h3>{s.name}</h3><h4>{s.title}</h4><p>{s.description}</p></article>)}</div></div></section>
  <section className="section assistant-section" id="ai-shopping"><div className="container-wide"><div className="section-topline"><div className="section-heading"><Eyebrow>YOUR INTELLIGENT SHOPPING COMPANION</Eyebrow><h2>Not just search. Understanding.</h2><p>A shopping experience that starts with what you need — not what you type.</p></div><span className="demo-tag"><CircleDot size={11}/>{shoppingLoading?'CONNECTING TO PRODUCT DATA':'SUPABASE CATALOGUE · V1'}</span></div>
  <div className="assistant-window"><div className="assistant-titlebar"><div className="assistant-name"><span className="ai-mark"><Sparkles size={16}/></span>BarangViral AI<span className="text-muted-foreground font-normal hidden sm:inline">/ Shopping assistant</span></div><span className="assistant-status"><span className="eyebrow-dot"/>{shoppingLoading?'CONNECTING':'CATALOGUE MATCHING'}</span></div>
- <div className="assistant-body"><div className="chat-side"><div className="user-message">{request}</div><div className="ai-message"><span className="ai-mark shrink-0"><Sparkles size={15}/></span><div><strong>{submitted?'Here’s what matches your request.':'Try describing what you need.'}</strong><p>{aiLoading?'Understanding your request and matching products…':aiError?aiError:submitted?'AI interpreted your request and searched the BarangViral Supabase catalogue.':shoppingLoading?'Loading the current BarangViral product catalogue…':shoppingProducts.length?'Describe what you need and I will match it against '+shoppingProducts.length+' products in the Supabase catalogue.':'Product data is temporarily unavailable. Please try again shortly.'}</p>{!shoppingLoading&&shoppingProducts.length>0&&<div className="intent-chips"><span><Check size={9} className="inline mr-1"/>{budget!==null?'Under RM'+budget:'Budget understood'}</span><span>Product matching</span><span>BarangViral catalogue</span></div>}</div></div><div className="assistant-tip"><BrainCircuit size={14} className="inline mr-2 text-primary"/>Rule-based intelligence first: understand intent, match products, rank options.</div>
- <form className="chat-input" onSubmit={submit}><input aria-label="Ask the AI shopping assistant" value={input} onChange={e=>setInput(e.target.value)} placeholder="Tell me what you’re looking for…"/><Button variant="commerce" size="icon" aria-label="Send request" type="submit" disabled={!input.trim()||shoppingLoading||aiLoading}><ArrowUp/></Button></form></div>
- <div className="suggestions"><div className="suggestions-heading">MATCHED FOR YOU <span>{shoppingLoading||aiLoading?'Searching…':recommendedProducts.length+' recommendations'}</span></div>{shoppingLoading||aiLoading?[0,1,2].map(i=><div className="product-row" key={i}><div className="product-visual"/><div className="min-w-0"><h4>{aiLoading?'Matching your request…':'Finding products…'}</h4><p>{aiLoading?'Using AI and the live catalogue':'Reading live catalogue data'}</p></div><span className="product-price">—</span></div>):recommendedProducts.map((p)=><div className="product-row" key={p.id}><ProductVisual product={p}/><div className="min-w-0"><h4>{p.name}</h4><p>{recommendationReason(p,request,budget)}</p><small><Check size={10}/>Matched from BarangViral catalogue</small></div><span className="product-price">{p.current_price!==null?'RM'+Number(p.current_price).toFixed(0):'—'}</span></div>)}{!shoppingLoading&&!aiLoading&&!aiError&&!recommendedProducts.length&&<div className="dialog-note">No matching products found in the current BarangViral catalogue. Try a broader request.</div>}<div className="compare-action"><span>Powered by Supabase product data</span><div className="flex flex-wrap gap-2"><Button variant="outline" size="sm" onClick={loadProductionCatalogue} disabled={shoppingLoading||aiLoading}>Refresh catalogue</Button>{recommendedProducts.length>1&&<Button variant="outline" size="sm" onClick={()=>setModal({type:'compare'})}><GitCompareArrows/>Compare options</Button>}</div></div></div></div></div>
+ <div className="assistant-body"><div className="chat-side"><div className="user-message">{request}</div><div className="ai-message"><span className="ai-mark shrink-0"><Sparkles size={15}/></span><div><strong>{submitted?'Here’s what matches your request.':'Try describing what you need.'}</strong><p>{aiLoading?'Understanding your request and matching products…':aiError?aiError:submitted?'Your request was checked against the BarangViral product catalogue.':shoppingLoading?'Loading the current BarangViral product catalogue…':shoppingProducts.length?'Describe what you need and I will match it against '+shoppingProducts.length+' products in the live catalogue.':'Product data is temporarily unavailable. Please try again shortly.'}</p>{!shoppingLoading&&shoppingProducts.length>0&&<div className="intent-chips"><span><Check size={9} className="inline mr-1"/>{budget!==null?'Up to RM'+budget:'Need-based match'}</span><span>Product matching</span><span>BarangViral catalogue</span></div>}</div></div><div className="assistant-tip"><BrainCircuit size={14} className="inline mr-2 text-primary"/>AI interprets your request; live catalogue data decides which products match.</div>
+ <form className="chat-input" onSubmit={submit}><input aria-label="Ask the AI shopping assistant" maxLength={500} value={input} onChange={e=>setInput(e.target.value)} placeholder="Tell me what you’re looking for…"/><Button variant="commerce" size="icon" aria-label="Send request" type="submit" disabled={!input.trim()||shoppingLoading||aiLoading}><ArrowUp/></Button></form></div>
+ <div className="suggestions" aria-live="polite"><div className="suggestions-heading">MATCHED FOR YOU <span>{shoppingLoading||aiLoading?'Searching…':recommendedProducts.length+' recommendations'}</span></div>{shoppingLoading||aiLoading?[0,1,2].map(i=><div className="product-row" key={i}><div className="product-visual"/><div className="min-w-0"><h4>{aiLoading?'Matching your request…':'Finding products…'}</h4><p>{aiLoading?'Using AI and the live catalogue':'Reading live catalogue data'}</p></div><span className="product-price">—</span></div>):recommendedProducts.map((p)=><button type="button" className="product-row product-result-button" aria-label={'View details for '+p.name} key={p.id} onClick={()=>setModal({type:'insight',productId:p.id})}><ProductVisual product={p}/><div className="min-w-0"><h4>{p.name}</h4><p>{recommendationReason(p,request,budget)}</p><small><Check size={10}/>Matched from BarangViral catalogue</small></div><span className="product-price">{p.current_price!==null?'RM'+Number(p.current_price).toFixed(0):'—'}</span></button>)}{!shoppingLoading&&!aiLoading&&!recommendedProducts.length&&<div className="dialog-note">{aiError||'No matching products found in the current BarangViral catalogue. Try a broader request.'}</div>}<div className="compare-action"><span>Powered by Supabase product data</span><div className="flex flex-wrap gap-2"><Button variant="outline" size="sm" onClick={loadProductionCatalogue} disabled={shoppingLoading||aiLoading}>Refresh catalogue</Button>{recommendedProducts.length>1&&<Button variant="outline" size="sm" onClick={()=>setModal({type:'compare'})}><GitCompareArrows/>Compare options</Button>}</div></div></div></div></div>
  </div></section>
  <InPagePushSlot />
  <section className="sponsored-offers" aria-label="Sponsored offers">
@@ -277,9 +303,9 @@ function Index() {
  <section className="final-cta"><Eyebrow>INTELLIGENCE MEETS OPPORTUNITY</Eyebrow><h2>Welcome to the Next<br/>Generation of Commerce.</h2><p>A smarter way to discover. A better way to connect. A new way to grow.</p><div className="hero-actions"><Button variant="secondary" className="primary-final" onClick={()=>scrollTo('ai-shopping')}>Explore BarangViral<ArrowUpRight/></Button><Button variant="outline" className="secondary-final" onClick={()=>setModal({type:'coming'})}>Join the Coming Marketplace<ArrowRight/></Button></div></section>
  </main>
  <footer className="footer"><div className="container-wide"><div className="footer-top"><div><a href="#home" aria-label="BarangViral.Store home"><img src={footerLogoUrl} className="brand-image footer-brand-image" alt="BarangViral.Store" width={1920} height={640} loading="lazy"/></a><p>AI E-Commerce Marketplace</p></div><nav className="footer-links" aria-label="Footer navigation"><a href="#about">About</a><a href="#ai-commerce">AI Commerce</a><a href="#buyers">For Buyers</a><a href="#sellers">For Sellers</a><a href="#suppliers">For Suppliers</a><a href="#partners">For Partners</a>{['Contact','Privacy','Terms'].map(t=><Button variant="link" key={t} onClick={()=>setModal({type:'info',title:t})}>{t}</Button>)}</nav></div><div className="footer-bottom"><span>© 2026 BarangViral.Store. All rights reserved.</span><span>UI/UX concept · Not a live marketplace</span><span>AI → Intelligence → Discovery → Matching → Commerce</span></div></div></footer>
- <Dialog open={modal!==null} onOpenChange={open=>{if(!open)setModal(null)}}><DialogContent className="max-w-xl w-[calc(100%-32px)] rounded-lg"><DialogTitle>{modal?.type==='compare'?'Compare your matched products':modal?.type==='insight'?selected?.name:modal?.type==='coming'?'The next generation is taking shape.':modal?.type==='audience'?`${modal.title?.replace('FOR ','')} · Coming marketplace`:modal?.title}</DialogTitle><DialogDescription>{modal?.type==='compare'?'Illustrative product comparison · Concept/demo data':modal?.type==='insight'?'Viral Radar AI · Illustrative intelligence, not live market analysis':modal?.type==='coming'?'BarangViral.Store is a UI/UX concept. Marketplace registration is not open yet.':modal?.type==='audience'?'A preview of the intelligence tools planned for the future marketplace.':'BarangViral.Store · Marketplace concept'}</DialogDescription>
- {modal?.type==='compare'&&<><div className="overflow-x-auto"><table className="comparison-table"><thead><tr><th>Product</th><th>Price</th><th>Why it matched</th></tr></thead><tbody>{recommendedProducts.map(p=><tr key={p.id}><td>{p.name}</td><td>{p.current_price!==null?'RM'+Number(p.current_price).toFixed(2):'—'}</td><td>{recommendationReason(p,request,budget)}</td></tr>)}</tbody></table></div><p className="dialog-note">These are products from the BarangViral Supabase catalogue. Matching is based on your request, budget and available product attributes.</p></>}
- {modal?.type==='insight'&&selected&&<><div className="metrics py-4"><div className="metric"><span>Price</span><strong>{selected.current_price!==null?'RM'+Number(selected.current_price).toFixed(2):'—'}</strong></div><div className="metric"><span>Rating</span><strong>{selected.rating?selected.rating.toFixed(1):'—'}</strong></div><div className="metric"><span>Reviews</span><strong>{selected.review_count||0}</strong></div><div className="metric"><span>Viral Score</span><strong>{Number(selected.viral_score||0).toFixed(0)}/100</strong></div></div><div className="recommendation"><strong><Sparkles size={12}/>MATCHING REASON</strong>{recommendationReason(selected,request,budget)}</div><p className="dialog-note">This recommendation comes from the BarangViral Supabase product catalogue. No paid AI API is used for this V1 matching engine.</p><Button variant="commerce" onClick={()=>{setModal(null);scrollTo('ai-shopping')}}>Back to AI Shopping<ArrowRight/></Button></>}
+ <Dialog open={modal!==null} onOpenChange={open=>{if(!open)setModal(null)}}><DialogContent className="max-w-xl w-[calc(100%-32px)] rounded-lg"><DialogTitle>{modal?.type==='compare'?'Compare your matched products':modal?.type==='insight'?(selected?.name||'Product details'):modal?.type==='coming'?'The next generation is taking shape.':modal?.type==='audience'?`${modal.title?.replace('FOR ','')} · Coming marketplace`:modal?.title}</DialogTitle><DialogDescription>{modal?.type==='compare'?'Live BarangViral catalogue data · Prices may change':modal?.type==='insight'?'Product details and recommendation match from the live catalogue':modal?.type==='coming'?'BarangViral.Store is a UI/UX concept. Marketplace registration is not open yet.':modal?.type==='audience'?'A preview of the intelligence tools planned for the future marketplace.':'BarangViral.Store · Marketplace concept'}</DialogDescription>
+ {modal?.type==='compare'&&<><div className="overflow-x-auto"><table className="comparison-table"><thead><tr><th>Product</th><th>Price</th><th>Discount</th><th>Rating</th><th>Reviews</th><th>Viral score</th><th>Why it matched</th></tr></thead><tbody>{recommendedProducts.map(p=><tr key={p.id}><td>{(p.brand?p.brand+' · ':'')+p.name}</td><td>{p.current_price!==null?'RM'+Number(p.current_price).toFixed(2):'—'}</td><td>{p.discount_percent!=null?Number(p.discount_percent).toFixed(0)+'%':'—'}</td><td>{p.rating?Number(p.rating).toFixed(1):'—'}</td><td>{p.review_count||0}</td><td>{Number(p.viral_score||0).toFixed(0)}/100</td><td>{recommendationReason(p,request,budget)}</td></tr>)}</tbody></table></div><p className="dialog-note">Compare price, discount, customer ratings and available catalogue signals side by side.</p></>}
+ {modal?.type==='insight'&&selected&&<><div className="flex items-center gap-4 py-3"><div className="h-24 w-24 shrink-0 overflow-hidden rounded-md bg-muted"><ProductImage src={selected.image_url} alt={selected.name} width={192} height={192}/></div><div><span className="text-xs text-muted-foreground">{selected.brand||'BarangViral catalogue'}</span><h3 className="mt-1 text-base font-semibold">{selected.name}</h3></div></div><div className="metrics py-4"><div className="metric"><span>Price</span><strong>{selected.current_price!==null?'RM'+Number(selected.current_price).toFixed(2):'—'}</strong></div><div className="metric"><span>Rating</span><strong>{selected.rating?Number(selected.rating).toFixed(1):'—'}</strong></div><div className="metric"><span>Reviews</span><strong>{selected.review_count||0}</strong></div><div className="metric"><span>Viral score</span><strong>{Number(selected.viral_score||0).toFixed(0)}/100</strong></div></div><div className="recommendation"><strong><Sparkles size={12}/>WHY IT MATCHED</strong>{recommendationReason(selected,request,budget)}</div><p className="dialog-note">Product details and price come from the BarangViral catalogue and can change as store data updates.</p>{selectedProductUrl&&<a className="inline-flex items-center gap-2 text-sm font-medium text-primary hover:underline" href={selectedProductUrl} target="_blank" rel="noopener noreferrer">View product listing<ArrowUpRight size={14}/></a>}<Button variant="commerce" className="mt-4" onClick={()=>setModal(null)}>Close<ArrowRight/></Button></>}
 
  {modal?.type==='offer'&&<><p className="dialog-note">This is a concept offer preview. Offer details, seller information and purchase links will be connected when the marketplace is operational.</p><Button variant="commerce" onClick={()=>{setModal(null);scrollTo('ai-shopping')}}>Explore with AI<ArrowRight/></Button></>}
  {modal?.type==='coming'&&<><p className="dialog-note">Explore the shopping assistant, product intelligence, and connected commerce journey today. Accounts, seller onboarding, and transactions will come in a future phase. No personal information is collected by this prototype.</p><Button variant="commerce" onClick={()=>{setModal(null);scrollTo('discover')}}>Explore the vision<ArrowRight/></Button></>}
