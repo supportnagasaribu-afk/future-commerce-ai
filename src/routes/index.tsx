@@ -133,6 +133,10 @@ function Index() {
  const [shoppingProducts,setShoppingProducts] = useState<ShoppingProduct[]>([]);
  const [shoppingLoading,setShoppingLoading] = useState(true);
  const [shoppingDataSource,setShoppingDataSource] = useState<'supabase'|'dummyjson'>('supabase');
+ const [aiBusy,setAiBusy] = useState(false);
+ const [aiError,setAiError] = useState('');
+ const [aiInterpretation,setAiInterpretation] = useState<AiShoppingInterpretation|null>(null);
+ const [aiRecommendations,setAiRecommendations] = useState<ShoppingProduct[]>([]);
  const [modal,setModal] = useState<{type:string;index?:number;title?:string}|null>(null);
  const [radarProducts,setRadarProducts] = useState<RadarProduct[]>([]);
  const [radarLoading,setRadarLoading] = useState(true);
@@ -222,10 +226,11 @@ function Index() {
   } catch { setShoppingProducts([]); }
   finally { setShoppingLoading(false); }
  }
- function submit(e:FormEvent) {e.preventDefault();if(!input.trim())return;setRequest(input.trim());setInput('');setSubmitted(true)}
+ async function submit(e:FormEvent) { e.preventDefault(); const prompt=input.trim(); if(!prompt||aiBusy)return; setRequest(prompt); setInput(''); setSubmitted(true); setAiError(''); setAiInterpretation(null); setAiRecommendations([]); if(shoppingDataSource!=='supabase'){setAiError('Return to production catalogue to use Gemini with BarangViral products.');return;} setAiBusy(true); try { const result=await requestAiShopping<ShoppingProduct>(prompt); setAiInterpretation(result.interpretation); setAiRecommendations(result.recommendations.map(p=>({...p,category_name:null}))); } catch(error) { setAiError(error instanceof Error?error.message:'AI Shopping could not connect.'); } finally { setAiBusy(false); } }
  function scrollTo(id:string) {document.getElementById(id)?.scrollIntoView({behavior:'smooth'});setMobileOpen(false)}
- const budget=parseBudget(request);
- const recommendedProducts=useMemo(()=>{const eligible=shoppingProducts.filter(p=>(budget===null||(p.current_price!==null&&p.current_price<=budget))&&isRelevantShoppingProduct(p,request));return [...eligible].sort((a,b)=>scoreShoppingProduct(b,request)-scoreShoppingProduct(a,request)).slice(0,3)},[shoppingProducts,request,budget]);
+ const budget=aiInterpretation?.max_budget_myr ?? parseBudget(request);
+ const matchingRequest=aiInterpretation?[aiInterpretation.category,...aiInterpretation.keywords].join(' '):request;
+ const recommendedProducts=useMemo(()=>{if(aiInterpretation)return aiRecommendations;const eligible=shoppingProducts.filter(p=>(budget===null||(p.current_price!==null&&p.current_price<=budget))&&isRelevantShoppingProduct(p,matchingRequest));return [...eligible].sort((a,b)=>scoreShoppingProduct(b,matchingRequest)-scoreShoppingProduct(a,matchingRequest)).slice(0,3)},[shoppingProducts,matchingRequest,budget,aiInterpretation,aiRecommendations]);
  const selected=modal?.index!==undefined ? recommendedProducts[modal.index] : undefined;
  return <>
  <header className="site-header" id="home"><div className="container-wide header-inner">
