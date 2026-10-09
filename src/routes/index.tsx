@@ -167,7 +167,7 @@ function Index() {
  function submit(e:FormEvent) {e.preventDefault();if(!input.trim())return;setRequest(input.trim());setInput('');setSubmitted(true)}
  function scrollTo(id:string) {document.getElementById(id)?.scrollIntoView({behavior:'smooth'});setMobileOpen(false)}
  const budget=parseBudget(request);
- const recommendedProducts=useMemo(()=>[...shoppingProducts].sort((a,b)=>scoreShoppingProduct(b,request)-scoreShoppingProduct(a,request)).slice(0,3),[shoppingProducts,request]);
+ const recommendedProducts=useMemo(()=>{const eligible=budget===null?shoppingProducts:shoppingProducts.filter(p=>p.current_price!==null&&p.current_price<=budget);return [...eligible].sort((a,b)=>scoreShoppingProduct(b,request)-scoreShoppingProduct(a,request)).slice(0,3)},[shoppingProducts,request,budget]);
  const selected=modal?.index!==undefined ? recommendedProducts[modal.index] : undefined;
  return <>
  <header className="site-header" id="home"><div className="container-wide header-inner">
