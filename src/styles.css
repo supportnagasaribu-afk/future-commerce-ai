@@ -66,6 +66,9 @@
 .inpage-push-slot .ad-banner-copy strong {font-size:12px;line-height:1.4}
 .inpage-push-slot .ad-banner-copy span {font-size:8px}
 .inpage-push-slot .featured-product-cta {display:inline-flex;align-items:center;gap:4px;color:var(--primary);font-size:10px!important;font-weight:700;letter-spacing:0!important}
+.inpage-push-slot .featured-product-price {font-size:14px!important;font-weight:800;color:var(--foreground);letter-spacing:0!important;margin-top:3px}
+.inpage-push-slot .featured-price-note {width:100%;margin:0;text-align:center;font-size:9px;line-height:1.5;color:var(--muted-foreground)}
+
 @media(max-width:760px) {.inpage-push-slot .ad-banner-grid {grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.inpage-push-slot .ad-banner-art {height:170px}}
 @media(max-width:380px) {.inpage-push-slot .ad-banner-art {height:140px}.inpage-push-slot .ad-banner-copy strong {font-size:11px}}
 
