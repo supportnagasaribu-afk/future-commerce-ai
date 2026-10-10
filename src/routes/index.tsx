@@ -49,7 +49,7 @@ const audiences = [
  {id:'partners',label:'FOR VIRAL PARTNERS',title:'Know What To Promote',icon:Megaphone,features:['Trending product discovery','Opportunity scoring','AI content ideas','Product recommendations','Performance insights'],cta:'Explore partner opportunities'},
 ];
 const wheel = [{name:'PRODUCT',icon:Box},{name:'DATA',icon:Database},{name:'AI INTELLIGENCE',icon:BrainCircuit},{name:'DISCOVERY',icon:ScanSearch},{name:'MATCHING',icon:Network},{name:'TRANSACTION',icon:ShoppingBag},{name:'MORE DATA',icon:Layers},{name:'SMARTER AI',icon:RefreshCw}];
-const nav = [{label:'Home',href:'#home'},{label:'Discover',href:'#discover'},{label:'AI Shopping',href:'#ai-shopping'},{label:'Viral Radar',href:'#viral-radar'},{label:'For Sellers',href:'#sellers'},{label:'For Partners',href:'#partners'}];
+const nav = [{label:'Home',href:'#home'},{label:'Discover',href:'#discover'},{label:'AI Shopping',href:'#ai-shopping'},{label:'Viral Radar',href:'#viral-radar'},{label:'For Sellers',href:'#sellers'},{label:'For Partners',href:'#partners'},{label:'Members',href:'/members'}];
 const productImages = [lampImage, fanImage, organizerImage];
 type RadarProduct = { product_id:string; name:string; brand:string|null; image_url:string|null; current_price:number|null; currency:string; viral_score:number; radar_status:string; trend_direction:string|null; google_score:number; tiktok_score:number; social_score:number; sales_score:number; growth_score:number; engagement_score:number; commerce_score:number; signal_source:string|null; signal_is_proxy:boolean; proxy_basis:string|null; signal_recorded_at:string|null };
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://bzrhhuupcnfgxejndxjo.supabase.co';

@@ -9,8 +9,7 @@ CORE PRODUCT CONCEPT:
 AI → Intelligence → Discovery → Matching → Commerce
 
 IMPORTANT:
-This is a UI/UX design task first.
-Do NOT build database, authentication, payment, marketplace backend, Supabase integration, or complex business logic yet.
+This repository began as a UI/UX concept. The public marketplace and payment flows remain prototype interactions. The `/members` route is a Supabase-backed member area for authentication, member profiles, referrals, points history, support requests, and admin controls.
 
 BRAND:
 - Brand name: BarangViral.Store
@@ -247,6 +246,10 @@ Continue developing this project in the [Lovable editor](https://lovable.dev/pro
 - **Ship faster**: describe what you want to build and Lovable handles the code.
 - **Stay in sync**: every change made in Lovable is committed straight to this repository.
 - **Full ownership**: this code is yours. Push to `main` on GitHub and your changes sync back into Lovable, ready for your next prompt.
+
+## Member area setup
+
+The member-area migrations have been applied to the connected Barang Viral Malaysia Supabase project. Before launch, allow `https://app.barangviral.store/members` as an Auth redirect URL, create or confirm the administrator account in Supabase Auth, and set its server-controlled `app_metadata.role` to `admin`. The requested admin email is not currently registered in Auth. The app uses only the Supabase URL and publishable key in the browser; never place a secret or service-role key in frontend configuration. The portal relies on the migration's row-level security policies.
 
 ## Development
 
