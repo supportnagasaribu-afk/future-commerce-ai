@@ -65,19 +65,19 @@ function AdSlot() {
 }
 
 function InPagePushSlot() {
- const banners = [
-  {name:'SkillUp',label:'LEARNING',href:'https://invl.app/clo2wt5',logo:'https://img.involve.asia/rpss/campaigns_banners/1785915861-o6Y3wIEkPSbgQvBRvwoa2zmc6aYuRBul.png'},
-  {name:"Kiehl's",label:'BEAUTY',href:'https://invl.us/clo2wsx',logo:'https://img.involve.asia/rpss/campaigns_banners/1786592557-eYGnGzDK3lJVZqI2TmDIkzTActjr8HHw.jpg'},
-  {name:"Domino's Pizza",label:'FOOD & DELIVERY',href:'https://invl.me/clo2wtn',logo:'https://img.involve.asia/rpss/campaigns_banners/1751339076-WkpULRGhkxItbQ8QN8oqcEYgXUXbk6oX.png'},
-  {name:'JD Sports',label:'SPORT & STYLE',href:'https://invl.me/clo2wms',logo:'https://img.involve.asia/rpss/campaigns_banners/38283-F6wDTqEGPyg3fu4ajrl3FTsB9UY8nAk9.jpeg'},
+ const products = [
+  {name:'KFC RM10 + RM8 Voucher',label:'VOUCHER DIGITAL',href:'https://s.shopee.com.my/AKbFWNYlBp',image:'https://down-my.img.susercontent.com/file/my-11134207-820l4-mjzg27hcuf44c1'},
+  {name:'Jeruk Mangga Papa Laris',label:'MAKANAN & SNEK',href:'https://s.shopee.com.my/60SGMnKO8B',image:'https://down-my.img.susercontent.com/file/my-11134207-7rasl-mdobnenm2jaw3b'},
+  {name:'ZUS Coffee Buy 1 Free 1',label:'VOUCHER MINUMAN',href:'https://s.shopee.com.my/7VH4CN0Z4Q',image:'https://down-my.img.susercontent.com/file/my-11134207-7rasa-mbxm30temaxy6a'},
+  {name:'CHEERFUL Air Cushion XL',label:'TISU XL · 1,280 HELAI',href:'https://s.shopee.com.my/113aSVAQzp',image:'https://down-my.img.susercontent.com/file/sg-11134201-7rd4k-lui034memmkn53'},
  ];
- return <section className="inpage-push-slot" aria-label="Sponsored banner advertisements">
+ return <section className="inpage-push-slot" aria-label="Produk pilihan affiliate">
   <div className="container-wide inpage-push-inner">
-   <span className="inpage-push-label">ADVERTISEMENT</span>
+   <span className="inpage-push-label">PILIHAN PRODUK VIRAL</span>
    <div className="ad-banner-grid">
-    {banners.map((banner)=><a key={banner.name} className="ad-banner-card" href={banner.href} target="_blank" rel="noopener noreferrer" aria-label={`Open ${banner.name} offer`}>
-      <div className="ad-banner-art"><img src={banner.logo} alt={`${banner.name} logo`} loading="lazy"/><span>{banner.name}</span></div>
-      <div className="ad-banner-copy"><strong>{banner.name}</strong><span>{banner.label} · SPONSORED</span></div>
+    {products.map((product)=><a key={product.name} className="ad-banner-card" href={product.href} target="_blank" rel="sponsored noopener noreferrer" aria-label={'Lihat '+product.name+' di Shopee'}>
+      <div className="ad-banner-art"><img src={product.image} alt={product.name} loading="lazy"/><span>{product.label}</span></div>
+      <div className="ad-banner-copy"><strong>{product.name}</strong><span>SHOPEE · AFFILIATE</span><span className="featured-product-cta">Lihat Produk <ArrowUpRight size={13}/></span></div>
     </a>)}
    </div>
    <div id="inpage-push-ad-slot" />
