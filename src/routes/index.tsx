@@ -66,10 +66,10 @@ function AdSlot() {
 
 function InPagePushSlot() {
  const products = [
-  {name:'KFC RM10 + RM8 Voucher',label:'VOUCHER DIGITAL',href:'https://s.shopee.com.my/AKbFWNYlBp',image:'https://down-my.img.susercontent.com/file/my-11134207-820l4-mjzg27hcuf44c1'},
-  {name:'Jeruk Mangga Papa Laris',label:'MAKANAN & SNEK',href:'https://s.shopee.com.my/60SGMnKO8B',image:'https://down-my.img.susercontent.com/file/my-11134207-7rasl-mdobnenm2jaw3b'},
-  {name:'ZUS Coffee Buy 1 Free 1',label:'VOUCHER MINUMAN',href:'https://s.shopee.com.my/7VH4CN0Z4Q',image:'https://down-my.img.susercontent.com/file/my-11134207-7rasa-mbxm30temaxy6a'},
-  {name:'CHEERFUL Air Cushion XL',label:'TISU XL · 1,280 HELAI',href:'https://s.shopee.com.my/113aSVAQzp',image:'https://down-my.img.susercontent.com/file/sg-11134201-7rd4k-lui034memmkn53'},
+  {name:'KFC RM10 + RM8 Voucher',label:'VOUCHER DIGITAL',price:'Anggaran RM1.99',href:'https://s.shopee.com.my/AKbFWNYlBp',image:'https://down-my.img.susercontent.com/file/my-11134207-820l4-mjzg27hcuf44c1'},
+  {name:'Jeruk Mangga Papa Laris',label:'MAKANAN & SNEK',price:'Anggaran RM15.90',href:'https://s.shopee.com.my/60SGMnKO8B',image:'https://down-my.img.susercontent.com/file/my-11134207-7rasl-mdobnenm2jaw3b'},
+  {name:'ZUS Coffee Buy 1 Free 1',label:'VOUCHER MINUMAN',price:'Anggaran RM1.65',href:'https://s.shopee.com.my/7VH4CN0Z4Q',image:'https://down-my.img.susercontent.com/file/my-11134207-7rasa-mbxm30temaxy6a'},
+  {name:'CHEERFUL Air Cushion XL',label:'TISU XL · 1,280 HELAI',price:'Semak harga terkini',href:'https://s.shopee.com.my/113aSVAQzp',image:'https://down-my.img.susercontent.com/file/sg-11134201-7rd4k-lui034memmkn53'},
  ];
  return <section className="inpage-push-slot" aria-label="Produk pilihan affiliate">
   <div className="container-wide inpage-push-inner">
@@ -77,9 +77,10 @@ function InPagePushSlot() {
    <div className="ad-banner-grid">
     {products.map((product)=><a key={product.name} className="ad-banner-card" href={product.href} target="_blank" rel="sponsored noopener noreferrer" aria-label={'Lihat '+product.name+' di Shopee'}>
       <div className="ad-banner-art"><img src={product.image} alt={product.name} loading="lazy"/><span>{product.label}</span></div>
-      <div className="ad-banner-copy"><strong>{product.name}</strong><span>SHOPEE · AFFILIATE</span><span className="featured-product-cta">Lihat Produk <ArrowUpRight size={13}/></span></div>
+      <div className="ad-banner-copy"><strong>{product.name}</strong><span className="featured-product-price">{product.price}</span><span>SHOPEE · AFFILIATE</span><span className="featured-product-cta">Lihat Produk <ArrowUpRight size={13}/></span></div>
     </a>)}
    </div>
+   <p className="featured-price-note">*Harga anggaran berdasarkan penyenaraian serupa dan boleh berubah. Tekan “Lihat Produk” untuk semak harga sebenar di Shopee.</p>
    <div id="inpage-push-ad-slot" />
   </div>
  </section>;
