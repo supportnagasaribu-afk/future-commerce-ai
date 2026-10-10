@@ -4,7 +4,7 @@
 create table if not exists public.member_profiles (
   id uuid primary key references auth.users (id) on delete cascade,
   email text not null,
-  full_name text not null default '',
+  full_name text not null default '' check (char_length(full_name) <= 120),
   commerce_role text not null default 'buyer'
     check (commerce_role in ('buyer', 'seller', 'supplier', 'partner')),
   referral_code text not null unique,
@@ -76,8 +76,12 @@ create policy "Members can read their own profile; admins can read all"
 
 create policy "Members can update their own editable profile fields"
   on public.member_profiles for update to authenticated
-  using ((select auth.uid()) = id)
-  with check ((select auth.uid()) = id);
+  using ((select auth.uid()) = id
+    and exists (select 1 from public.member_accounts a
+      where a.user_id = (select auth.uid()) and a.account_status = 'active'))
+  with check ((select auth.uid()) = id
+    and exists (select 1 from public.member_accounts a
+      where a.user_id = (select auth.uid()) and a.account_status = 'active'));
 
 create policy "Members can read their own account; admins can read all"
   on public.member_accounts for select to authenticated
@@ -101,7 +105,9 @@ create policy "Members can read their own support requests; admins can read all"
 
 create policy "Authenticated members can open their own support requests"
   on public.support_requests for insert to authenticated
-  with check (user_id = (select auth.uid()));
+  with check (user_id = (select auth.uid())
+    and exists (select 1 from public.member_accounts a
+      where a.user_id = (select auth.uid()) and a.account_status = 'active'));
 
 create policy "Only admins can change support request status"
   on public.support_requests for update to authenticated
