@@ -53,18 +53,30 @@ create table if not exists public.support_requests (
   updated_at timestamptz not null default now()
 );
 
+create table if not exists public.member_admin_activity (
+  id uuid primary key default gen_random_uuid(),
+  admin_user_id uuid references auth.users (id) on delete set null,
+  admin_email text not null,
+  action text not null,
+  details text not null default '',
+  target_member_id uuid references public.member_profiles (id) on delete set null,
+  target_email text not null default '',
+  created_at timestamptz not null default now()
+);
+
 alter table public.member_profiles enable row level security;
 alter table public.member_accounts enable row level security;
 alter table public.referral_relationships enable row level security;
 alter table public.points_transactions enable row level security;
 alter table public.support_requests enable row level security;
+alter table public.member_admin_activity enable row level security;
 
 revoke all on public.member_profiles, public.member_accounts, public.referral_relationships,
-  public.points_transactions, public.support_requests from anon, authenticated;
+  public.points_transactions, public.support_requests, public.member_admin_activity from anon, authenticated;
 
 grant select on public.member_profiles, public.member_accounts,
-  public.referral_relationships, public.points_transactions, public.support_requests
-  to authenticated;
+  public.referral_relationships, public.points_transactions, public.support_requests,
+  public.member_admin_activity to authenticated;
 grant update (full_name, commerce_role) on public.member_profiles to authenticated;
 grant insert (user_id, subject, message) on public.support_requests to authenticated;
 grant update (status) on public.support_requests to authenticated;
@@ -113,6 +125,10 @@ create policy "Only admins can change support request status"
   on public.support_requests for update to authenticated
   using (coalesce((select auth.jwt() -> 'app_metadata' ->> 'role') = 'admin', false))
   with check (coalesce((select auth.jwt() -> 'app_metadata' ->> 'role') = 'admin', false));
+
+create policy "Only admins can read member admin activity"
+  on public.member_admin_activity for select to authenticated
+  using (coalesce((select auth.jwt() -> 'app_metadata' ->> 'role') = 'admin', false));
 
 create or replace function public.handle_new_member()
 returns trigger
@@ -209,6 +225,12 @@ begin
      (select auth.uid()), coalesce(v_admin_email, ''))
   returning * into v_transaction;
 
+  insert into public.member_admin_activity
+    (admin_user_id, admin_email, action, details, target_member_id, target_email)
+  values
+    ((select auth.uid()), coalesce(v_admin_email, ''), 'Adjusted member points',
+     p_amount::text || ' points: ' || trim(p_reason), p_member_id, coalesce(v_member_email, ''));
+
   return v_transaction;
 end;
 $$;
@@ -237,8 +259,50 @@ begin
   if not found then
     raise exception 'Member not found' using errcode = 'P0002';
   end if;
+
+  insert into public.member_admin_activity
+    (admin_user_id, admin_email, action, details, target_member_id, target_email)
+  select (select auth.uid()), coalesce(admin.email, ''), 'Changed member account status',
+    'Account status set to ' || p_account_status, p_member_id, coalesce(member.email, '')
+    from (select email from auth.users where id = (select auth.uid())) admin,
+         (select email from public.member_profiles where id = p_member_id) member;
 end;
-$$;
+$;
+
+create or replace function public.log_support_status_change()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $
+declare
+  v_admin_email text;
+  v_member_email text;
+begin
+  if (select auth.uid()) is null
+    or coalesce((select auth.jwt() -> 'app_metadata' ->> 'role') = 'admin', false) is not true then
+    raise exception 'Admin access required' using errcode = '42501';
+  end if;
+
+  select email into v_admin_email from auth.users where id = (select auth.uid());
+  select email into v_member_email from public.member_profiles where id = new.user_id;
+  insert into public.member_admin_activity
+    (admin_user_id, admin_email, action, details, target_member_id, target_email)
+  values
+    ((select auth.uid()), coalesce(v_admin_email, ''), 'Updated support request',
+     'Request ' || new.id::text || ' status: ' || old.status || ' → ' || new.status,
+     new.user_id, coalesce(v_member_email, ''));
+  return new;
+end;
+$;
+
+revoke all on function public.log_support_status_change() from public, anon, authenticated;
+drop trigger if exists on_support_status_changed on public.support_requests;
+create trigger on_support_status_changed
+  after update of status on public.support_requests
+  for each row
+  when (old.status is distinct from new.status)
+  execute function public.log_support_status_change();
 
 revoke all on function public.adjust_member_points(uuid, integer, text) from public, anon;
 revoke all on function public.admin_set_member_status(uuid, text) from public, anon;
