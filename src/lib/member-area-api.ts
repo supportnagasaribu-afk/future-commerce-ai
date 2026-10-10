@@ -105,7 +105,7 @@ export async function signUp(input: {
   commerceRole: MemberProfile["commerce_role"];
   referralCode: string;
 }) {
-  const response = await fetch(`${SUPABASE_URL}/auth/v1/signup`, {
+  const response = await fetch(`${SUPABASE_URL}/auth/v1/signup?redirect_to=${encodeURIComponent(window.location.origin + "/members")}`, {
     method: "POST",
     headers: authHeaders(),
     body: JSON.stringify({
