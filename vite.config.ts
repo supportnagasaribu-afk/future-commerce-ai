@@ -12,4 +12,11 @@ export default defineConfig({
     // nitro/vite builds from this
     server: { entry: "server" },
   },
+  nitro: {
+    cloudflare: {
+      // Cloudflare Workers Builds runs `wrangler preview` against Nitro's generated config.
+      // Previews are isolated; no extra preview-only bindings are needed for this app.
+      wrangler: { previews: {} },
+    },
+  },
 });
