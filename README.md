@@ -249,7 +249,7 @@ Continue developing this project in the [Lovable editor](https://lovable.dev/pro
 
 ## Member area setup
 
-Apply the migration in `supabase/migrations/` to the intended Supabase project, allow `https://barangviral.store/members` as an Auth redirect URL, and set the administrator user's Auth `app_metadata.role` to `admin`. The app uses only the Supabase URL and publishable key in the browser; never place a secret or service-role key in frontend configuration. The portal relies on the migration's row-level security policies.
+The member-area migrations have been applied to the connected Barang Viral Malaysia Supabase project. Before launch, allow `https://barangviral.store/members` as an Auth redirect URL, create or confirm the administrator account in Supabase Auth, and set its server-controlled `app_metadata.role` to `admin`. The requested admin email is not currently registered in Auth. The app uses only the Supabase URL and publishable key in the browser; never place a secret or service-role key in frontend configuration. The portal relies on the migration's row-level security policies.
 
 ## Development
 
