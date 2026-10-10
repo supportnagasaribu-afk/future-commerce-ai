@@ -116,7 +116,6 @@ export async function signUp(input: {
         commerce_role: input.commerceRole,
         referral_code: input.referralCode.trim().toUpperCase(),
       },
-      gotrue_meta_security: { captcha_token: undefined },
     }),
   });
   const data = await readResponse<{ user: MemberUser; session?: MemberSession | null }>(response);
