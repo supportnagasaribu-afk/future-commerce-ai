@@ -1,8 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
 import {
-  ArrowLeft, ArrowRight, BadgeCheck, Check, Clock3, Copy, Gift, LayoutDashboard,
-  Loader2, LogOut, Mail, ShieldCheck, Sparkles, Ticket, Users, Wallet,
+  ArrowLeft, ArrowRight, BadgeCheck, Copy, Gift, LayoutDashboard,
+  Loader2, LogOut, ShieldCheck, Sparkles, Ticket, Users, Wallet,
 } from "lucide-react";
 import {
   adjustMemberPoints,
