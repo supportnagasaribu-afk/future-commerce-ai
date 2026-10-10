@@ -267,14 +267,14 @@ begin
     from (select email from auth.users where id = (select auth.uid())) admin,
          (select email from public.member_profiles where id = p_member_id) member;
 end;
-$;
+$$;
 
 create or replace function public.log_support_status_change()
 returns trigger
 language plpgsql
 security definer
 set search_path = ''
-as $
+as $$
 declare
   v_admin_email text;
   v_member_email text;
@@ -294,7 +294,7 @@ begin
      new.user_id, coalesce(v_member_email, ''));
   return new;
 end;
-$;
+$$;
 
 revoke all on function public.log_support_status_change() from public, anon, authenticated;
 drop trigger if exists on_support_status_changed on public.support_requests;
