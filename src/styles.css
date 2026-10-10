@@ -90,3 +90,30 @@
  .ad-banner-copy strong {font-size:10px;line-height:1.25}
  .ad-banner-copy span {font-size:7px;line-height:1.35;letter-spacing:.65px}
 }
+
+/* Keep the full mobile journey readable without oversized cards */
+@media(max-width:520px) {
+ .section {padding:52px 0}
+ .hero {height:680px}
+ .assistant-titlebar {height:auto;min-height:52px;padding-block:10px;gap:10px}
+ .assistant-status {white-space:nowrap}
+ .product-row {grid-template-columns:56px minmax(0,1fr) auto;gap:10px;padding:9px 0}
+ .product-visual {height:62px}
+ .radar-grid {grid-template-columns:minmax(0,1fr);gap:14px}
+ .radar-image {height:165px}
+ .radar-content {padding:16px}
+ .radar-category {font-size:9px}
+ .radar-content h3 {font-size:17px;line-height:1.35;margin:6px 0 12px}
+ .metrics {grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+ .metric {font-size:9px;gap:5px}
+ .metric strong {font-size:9px}
+ .recommendation {margin-top:13px;padding:10px;font-size:9px}
+ .radar-card .insight-button {min-height:40px;margin-top:8px}
+ .flywheel {max-width:100%}
+}
+@media(max-width:360px) {
+ .container-wide {width:calc(100% - 28px)}
+ .hero h1 {font-size:35px}
+ .hero-actions button,.hero-actions a {padding-inline:10px}
+ .flywheel {transform:scale(.88);margin-block:-18px}
+}
